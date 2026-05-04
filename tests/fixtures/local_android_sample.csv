@@ -1,0 +1,12 @@
+run_id,iter,tag,framework,os,device_model,device_os,flow,apk,device_readiness_ms,app_install_ms,maestro_total_ms,maestro_start_ms,execution_ms,stop_ms,session_total_ms,exit_code
+20260430_175317,1,baseline,maestro,android,LE2101,14,benchmark_loop.yaml,WikipediaSample.apk,147,13772,1168475,6179,1157465,779,1183173,0
+20260430_175317,2,baseline,maestro,android,LE2101,14,benchmark_loop.yaml,WikipediaSample.apk,135,12100,1170100,6580,1162100,650,1184885,0
+20260430_175317,3,baseline,maestro,android,LE2101,14,benchmark_loop.yaml,WikipediaSample.apk,140,11800,1165200,5980,1160800,720,1177920,0
+20260430_175317,4,baseline,maestro,android,LE2101,14,benchmark_loop.yaml,WikipediaSample.apk,150,14200,1175400,6420,1167500,810,1196580,0
+20260430_175317,5,baseline,maestro,android,LE2101,14,benchmark_loop.yaml,WikipediaSample.apk,142,12500,1169200,6230,1161800,740,1184412,0
+20260430_175317,6,baseline,maestro,android,LE2101,14,benchmark_loop.yaml,WikipediaSample.apk,155,15100,1180300,6650,1172300,850,1201405,0
+20260430_175317,7,baseline,maestro,android,LE2101,14,benchmark_loop.yaml,WikipediaSample.apk,138,11500,1163400,5860,1158600,690,1175728,0
+20260430_175317,8,baseline,maestro,android,LE2101,14,benchmark_loop.yaml,WikipediaSample.apk,144,13000,1171800,6310,1163100,760,1187214,0
+20260430_175317,9,baseline,maestro,android,LE2101,14,benchmark_loop.yaml,WikipediaSample.apk,148,13500,1174200,6480,1166000,800,1190028,0
+20260430_175317,10,baseline,maestro,android,LE2101,14,benchmark_loop.yaml,WikipediaSample.apk,141,12300,1167800,6090,1160500,720,1185451,0
+20260430_175317,11,baseline,maestro,android,LE2101,14,benchmark_loop.yaml,WikipediaSample.apk,158,16800,1182400,6720,1175200,910,1206068,1
