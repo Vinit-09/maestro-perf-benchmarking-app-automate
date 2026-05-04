@@ -1,0 +1,24 @@
+# Compound Engineering local config
+.compound-engineering/*.local.yaml
+
+# macOS / IDE noise
+.DS_Store
+.idea/
+
+# Cached cloud upload URLs (regenerated per run)
+results/_cloud_cache.env
+
+# Large binaries — not tracked in git
+apps/*.apk
+apps/*.ipa
+
+# Per-run artifacts (kept local, not tracked)
+results/2*/
+results/cloud_*/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
