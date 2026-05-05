@@ -53,6 +53,10 @@ class EmptyCellError(Exception):
     """Raised when a cell points at a path that has no usable session rows."""
 
 
+class MalformedCellError(Exception):
+    """Raised when a BQ response can't be mapped to the canonical session schema."""
+
+
 def _to_int(value: str | None) -> int | None:
     if value is None or value == "":
         return None
@@ -169,4 +173,141 @@ def load_local_ios(
         expected_os="ios",
         cell_name="local_ios",
         capability_profile=capability_profile,
+    )
+
+
+# --- cloud BQ row loader -----------------------------------------------------
+
+# Mapping from BQ field names (as queried by the orchestrator) to CellSession
+# attribute names. The orchestrator's SQL is responsible for selecting these
+# columns; the loader trusts the schema it gets back.
+_CLOUD_FIELD_MAP: dict[str, str] = {
+    "execution_s": "execution_s",
+    "firecmd_ms": "start_ms",
+    "app_dl_ms": "app_dl_ms",
+    "app_install_ms": "app_install_ms",
+    "test_dl_ms": "test_dl_ms",
+    "test_install_ms": "test_install_ms",
+    "stop_ms": "stop_ms",
+    "device_region": "region",
+    "hashed_id": "source_id",
+    "waiting_no_parallel_ms": "waiting_reason_no_parallel_ms",
+    "waiting_device_tier_ms": "waiting_reason_device_tier_ms",
+    "waiting_async_signing_ms": "waiting_reason_async_signing_ms",
+    "waiting_region_pool_ms": "waiting_reason_region_pool_ms",
+}
+
+
+def _coerce_value(raw: object, field_type: str) -> object:
+    """Coerce a BQ MCP cell value (always shipped as string) to a Python type."""
+    if raw is None:
+        return None
+    s = str(raw)
+    if s == "":
+        return None
+    if field_type in ("INT64", "INTEGER"):
+        try:
+            return int(float(s))  # BQ may serialize 5.0 for INT64
+        except ValueError:
+            return None
+    if field_type in ("FLOAT", "FLOAT64", "NUMERIC"):
+        try:
+            return float(s)
+        except ValueError:
+            return None
+    return s
+
+
+def load_cloud_cell(
+    bq_response: dict,
+    *,
+    cell_name: str,
+    os: str,
+    capability_profile: str = "defaults",
+    framework: str = "maestro",
+) -> Cell:
+    """Convert a BigQuery MCP response into a Cell.
+
+    The orchestrator runs a SELECT against ``app_automate_test_sessions_partitioned``
+    (joined with the queueing table for waiting-time reason buckets) and passes
+    the response dict here. Field names referenced via ``_CLOUD_FIELD_MAP`` must
+    appear in the SELECT for this loader to populate them; missing fields
+    become ``None`` on the resulting CellSession.
+    """
+    if not isinstance(bq_response, dict):
+        raise MalformedCellError("bq_response is not a dict")
+
+    schema = bq_response.get("schema") or {}
+    fields = schema.get("fields") or []
+    if not fields:
+        raise MalformedCellError("bq_response.schema.fields is missing or empty")
+
+    field_names = [f.get("name") for f in fields]
+    field_types = {f.get("name"): f.get("type", "STRING") for f in fields}
+    rows_raw = bq_response.get("rows") or []
+
+    sessions: list[CellSession] = []
+    for idx, row in enumerate(rows_raw):
+        cells = row.get("f")
+        if cells is None or len(cells) != len(field_names):
+            raise MalformedCellError(
+                f"row {idx}: expected {len(field_names)} cells, got "
+                f"{0 if cells is None else len(cells)}"
+            )
+        row_dict: dict[str, object] = {}
+        for name, cell in zip(field_names, cells):
+            row_dict[name] = _coerce_value(cell.get("v"), field_types.get(name, "STRING"))
+
+        # Walk the canonical schema, pulling each value via the field map.
+        canonical: dict[str, object] = {}
+        for bq_name, attr in _CLOUD_FIELD_MAP.items():
+            canonical[attr] = row_dict.get(bq_name)
+
+        # Compute total waiting_ms from non-null reason buckets.
+        reasons = [
+            canonical.get("waiting_reason_no_parallel_ms"),
+            canonical.get("waiting_reason_device_tier_ms"),
+            canonical.get("waiting_reason_async_signing_ms"),
+            canonical.get("waiting_reason_region_pool_ms"),
+        ]
+        non_null_reasons = [r for r in reasons if isinstance(r, (int, float))]
+        waiting_ms = int(sum(non_null_reasons)) if non_null_reasons else None
+
+        sessions.append(
+            CellSession(
+                waiting_ms=waiting_ms,
+                waiting_reason_no_parallel_ms=canonical.get("waiting_reason_no_parallel_ms"),
+                waiting_reason_device_tier_ms=canonical.get("waiting_reason_device_tier_ms"),
+                waiting_reason_async_signing_ms=canonical.get("waiting_reason_async_signing_ms"),
+                waiting_reason_region_pool_ms=canonical.get("waiting_reason_region_pool_ms"),
+                start_ms=canonical.get("start_ms"),
+                execution_s=canonical.get("execution_s"),
+                app_dl_ms=canonical.get("app_dl_ms"),
+                app_install_ms=canonical.get("app_install_ms"),
+                test_dl_ms=canonical.get("test_dl_ms"),
+                test_install_ms=canonical.get("test_install_ms"),
+                stop_ms=canonical.get("stop_ms"),
+                region=canonical.get("region"),
+                source_id=str(canonical.get("source_id") or ""),
+            )
+        )
+
+    if not sessions:
+        raise EmptyCellError(f"cloud cell {cell_name!r} contains no rows")
+
+    # Source build_ids are de-duped from the rows when present.
+    source_build_ids = sorted({
+        str(row.get("f")[field_names.index("build_id")].get("v"))
+        for row in rows_raw
+        if "build_id" in field_names
+        and row.get("f")[field_names.index("build_id")].get("v") is not None
+    })
+
+    return Cell(
+        name=cell_name,
+        framework=framework,
+        os=os,
+        capability_profile=capability_profile,
+        sessions=sessions,
+        source_paths=source_build_ids,
     )
