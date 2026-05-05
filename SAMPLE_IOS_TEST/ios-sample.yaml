@@ -1,0 +1,13 @@
+appId: com.browserstack.Sample-iOS
+tags:
+  - ios
+  - passing
+  - sample
+---
+- launchApp
+- takeScreenshot: MainScreen1 # screenshot will be stored as MainScreen.png
+- tapOn:
+    id: "Text Button"
+- tapOn:
+    id: "Text Input"
+- inputText: "hello@browserstack.com"

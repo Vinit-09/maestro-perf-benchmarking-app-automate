@@ -1,0 +1,13 @@
+appId: org.wikipedia.alpha
+tags:
+  - calibration
+---
+- launchApp
+- tapOn:
+    id: "org.wikipedia.alpha:id/search_container"
+- repeat:
+    times: 5
+    commands:
+      - eraseText
+      - inputText: "BrowserStack"
+      - assertVisible: "Software company based in India"
