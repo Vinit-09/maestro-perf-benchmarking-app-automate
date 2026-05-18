@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Android Maestro Benchmark — Local vs BrowserStack Cloud</title>
+<style>
+:root {
+  --bg: #0b1020; --bg-card: #ffffff; --bg-section: #f7f9fc;
+  --ink: #0f172a; --ink-soft: #475569; --ink-muted: #94a3b8;
+  --accent: #22d3ee; --accent-deep: #0891b2;
+  --pass: #10b981; --fail: #ef4444; --warn: #f59e0b;
+  --line: #e2e8f0;
+  --shadow: 0 1px 3px rgba(15,23,42,.08), 0 8px 24px rgba(15,23,42,.04);
+  --radius: 14px;
+  --hero-grad: radial-gradient(circle at 20% 0%, #1e3a8a 0%, #0b1020 60%);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", sans-serif;
+  color: var(--ink); background: var(--bg-section); line-height: 1.6; font-size: 16px;
+}
+.hero {
+  min-height: 100vh; background: var(--hero-grad); color: #f1f5f9;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 60px 24px 40px; position: relative; overflow: hidden;
+}
+.hero-inner { max-width: 1200px; margin: 0 auto; width: 100%; position: relative; z-index: 1; }
+.eyebrow {
+  text-transform: uppercase; letter-spacing: 0.18em; font-size: 12px;
+  color: var(--accent); font-weight: 600; margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(36px, 6vw, 64px); font-weight: 700; line-height: 1.1;
+  margin: 0 0 24px; letter-spacing: -0.02em;
+}
+.hero h1 span.accent { color: var(--accent); }
+.hero h1 span.win { color: var(--pass); }
+.hero h1 span.loss { color: var(--warn); }
+.hero-lede {
+  font-size: clamp(16px, 2vw, 20px); max-width: 720px; color: #cbd5e1; margin-bottom: 48px;
+}
+.hero-stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px; margin-top: 40px;
+}
+.stat {
+  background: rgba(255,255,255,.06); backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,.1); border-radius: var(--radius); padding: 24px;
+}
+.stat-label {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--accent); margin-bottom: 12px; font-weight: 600;
+}
+.stat-value { font-size: 32px; font-weight: 700; line-height: 1; margin-bottom: 6px; }
+.stat-sub { font-size: 13px; color: #94a3b8; }
+section { max-width: 1100px; margin: 0 auto; padding: 60px 24px; }
+section.wide { max-width: 1300px; }
+h2 {
+  font-size: clamp(24px, 3vw, 36px); font-weight: 700; letter-spacing: -0.02em;
+  margin: 0 0 24px; color: var(--ink);
+}
+h3 { font-size: 20px; font-weight: 600; margin: 32px 0 12px; color: var(--ink); }
+p { margin: 0 0 16px; color: var(--ink-soft); }
+.card {
+  background: var(--bg-card); border-radius: var(--radius); padding: 28px;
+  box-shadow: var(--shadow); border: 1px solid var(--line); margin: 16px 0;
+}
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+@media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+.tag {
+  display: inline-block; font-size: 11px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--accent-deep); font-weight: 700; margin-bottom: 8px;
+}
+table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+th, td {
+  text-align: right; padding: 10px 12px; border-bottom: 1px solid var(--line);
+  font-variant-numeric: tabular-nums;
+}
+th:first-child, td:first-child { text-align: left; }
+th {
+  background: #f1f5f9; font-weight: 600; color: var(--ink); font-size: 12px;
+  text-transform: uppercase; letter-spacing: .04em; border-bottom: 2px solid var(--line);
+}
+tr.highlight { background: #f1f5f9; font-weight: 600; }
+tr.dual-tc td:first-child { color: var(--accent-deep); }
+.delta-pos { color: var(--fail); font-weight: 600; }
+.delta-neg { color: var(--pass); font-weight: 600; }
+.delta-zero { color: var(--ink-muted); }
+code {
+  background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: .92em;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+}
+.verdict-block {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border-radius: var(--radius); padding: 40px; margin: 32px 0;
+  border-left: 6px solid var(--pass);
+}
+.verdict-block.warn {
+  background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%);
+  border-left-color: var(--warn);
+}
+.verdict-math {
+  display: flex; gap: 24px; flex-wrap: wrap; margin: 24px 0;
+}
+.verdict-cell {
+  flex: 1; min-width: 160px; background: rgba(255,255,255,.7);
+  padding: 16px; border-radius: 10px;
+}
+.verdict-cell .num {
+  font-size: 28px; font-weight: 700; color: var(--ink); margin-bottom: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.verdict-cell .lbl {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--ink-soft); font-weight: 600;
+}
+.note {
+  background: #fef3c7; border-left: 4px solid var(--warn);
+  padding: 16px 20px; border-radius: 8px; margin: 16px 0; color: var(--ink-soft);
+}
+footer {
+  background: var(--bg); color: #94a3b8;
+  padding: 40px 24px; text-align: center; font-size: 13px;
+}
+footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow">Android Maestro benchmark · 8ed0b0edc7e1…</div>
+    <h1>BrowserStack cloud Android beats local by <span class="win">8%</span> at P90</h1>
+    <p class="hero-lede">
+      A 100-session benchmark on Samsung Galaxy S24 (Android 14) running an
+      identical dual-yaml workload (two 50-rep search loops) to validate
+      BrowserStack cloud Maestro v2 against a local-Android baseline.
+    </p>
+    <div class="hero-stats">
+      <div class="stat">
+        <div class="stat-label">Local sessions</div>
+        <div class="stat-value">9</div>
+        <div class="stat-sub">OnePlus 9R (Android 14), Maestro 1.39.13</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Cloud device entries</div>
+        <div class="stat-value">100</div>
+        <div class="stat-sub">Samsung Galaxy S24-14.0, BS Maestro v2</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Cloud pass rate</div>
+        <div class="stat-value">97%</div>
+        <div class="stat-sub">97 sessions with usable data</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Cloud P90 / Local P90</div>
+        <div class="stat-value">0.92×</div>
+        <div class="stat-sub">session_total at P90</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section>
+  <h2>Why this benchmark exists</h2>
+  <div class="grid-2">
+    <div class="card">
+      <div class="tag">The hypothesis</div>
+      <p>
+        BrowserStack cloud Android delivers performance comparable to local-Android
+        for a real-user-style Maestro workload — verified against an OnePlus 9R
+        local baseline and a Samsung Galaxy S24-14.0 cloud pool.
+      </p>
+    </div>
+    <div class="card">
+      <div class="tag">What's in scope</div>
+      <p>
+        Wall-time deltas across 100 reps of a search-and-assert workload, split
+        into two 50-rep testcases per session to fit the BS Maestro v2 per-tc
+        time cap (see gotcha #3 in the runbook).
+      </p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Same app. Same flow. Two environments.</h2>
+  <p>
+    Both local and cloud run Maestro 1.39.13 against the same WikipediaSample.apk
+    (org.wikipedia.alpha). Cloud session execution is split into <code>test_a.yaml</code>
+    and <code>test_b.yaml</code> — both identical 50-rep clones of the same
+    <code>search_browserstack</code> workload — to validate the gotcha-#3
+    split-yaml mitigation at benchmark scale.
+  </p>
+</section>
+
+<section>
+  <h2>Dual-yaml workload mechanics</h2>
+  <p>
+    A single 100-rep yaml would have hit BrowserStack's documented per-tc
+    execution-time cap at ~870–900s. The multitest pattern splits the 100 reps
+    into two identical 50-rep testcases, each getting its own per-tc budget
+    while preserving 100 reps of identical work per session.
+  </p>
+  <div class="card">
+    <div class="tag">Per-tc duration (97 passed cloud sessions)</div>
+    <table>
+      <thead>
+        <tr><th>Testcase</th><th>N</th><th>min</th><th>P50</th><th>P90</th><th>P95</th><th>max</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>test_a</td>
+          <td>97</td>
+          <td>481.0s</td>
+          <td>528.0s</td>
+          <td>532.0s</td>
+          <td>533.2s</td>
+          <td>563.0s</td>
+        </tr>
+        <tr>
+          <td>test_b</td>
+          <td>97</td>
+          <td>481.0s</td>
+          <td>527.0s</td>
+          <td>531.0s</td>
+          <td>533.0s</td>
+          <td>562.0s</td>
+        </tr>
+        <tr class="highlight">
+          <td>combined (per-session sum)</td>
+          <td>97</td>
+          <td>964.0s</td>
+          <td>1055.0s</td>
+          <td>1063.0s</td>
+          <td>1065.2s</td>
+          <td>1125.0s</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="margin-top:18px;">
+      <strong style='color:var(--pass);'>✓ No cap violations:</strong> all 194 testcase runs (97 sessions × 2 tcs) completed well under the ~870 s gotcha-#3 inspect threshold. The split-yaml mitigation is validated at scale.
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2>Cloud: 100 device entries, 97 with data</h2>
+  <p>
+    The build completed with <strong>97/100 passed</strong>
+    (3 errored). All 3 errored sessions hit the same
+    physical unit (hostname <code>RZCX60PWTST</code>) with byte-identical fingerprints —
+    a hostname-deterministic failure mode captured as gotcha #16 in the runbook.
+    These 3 sessions are excluded from cloud percentile aggregation.
+  </p>
+  <div class="note">
+    One outlier session (<code>370100b8…</code>) completed at <strong>2054 s</strong>
+    vs the typical 1140 s. It is included in cloud percentiles — visible at P100 only
+    (P50 / P75 / P90 / P95 all fall in the tight 1139–1162 s band).
+  </div>
+</section>
+
+<section class="wide">
+  <h2>Cloud vs Local — head to head</h2>
+  <div class="verdict-block">
+    <h3 style='margin-top:0;'>Cloud P90 is 0.920× of local P90</h3>
+    <div class="verdict-math">
+      <div class="verdict-cell">
+        <div class="num">1255.8s</div>
+        <div class="lbl">Local P90</div>
+      </div>
+      <div class="verdict-cell">
+        <div class="num">1155.8s</div>
+        <div class="lbl">Cloud P90</div>
+      </div>
+      <div class="verdict-cell">
+        <div class="num">0.920×</div>
+        <div class="lbl">Cloud / Local</div>
+      </div>
+    </div>
+    <p style="margin-bottom:0;">
+      At session_total P90, cloud is 8% faster than local — driven by the newer Samsung Galaxy S24 cloud pool vs the OnePlus 9R local device. Cloud is slower on BS-internal overhead (app_install adds ~3 s at P50) but wins on flow execution.
+    </p>
+  </div>
+
+  <h3>Side-by-side numbers</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>phase_step</th>
+        <th>local N</th><th>local P50</th><th>local P90</th>
+        <th>cloud N</th><th>cloud P50</th><th>cloud P90</th>
+        <th>Δ P50</th><th>Δ P90</th>
+      </tr>
+    </thead>
+    <tbody>
+<tr class=""><td>device_readiness</td><td>9</td><td>141 ms</td><td>150 ms</td><td>—</td><td>—</td><td>—</td><td class="delta-zero">—</td><td class="delta-zero">—</td></tr>
+<tr class=""><td>app_install</td><td>9</td><td>1,672 ms</td><td>1,995 ms</td><td>97</td><td>4,898 ms</td><td>6,564 ms</td><td class="delta-pos">+3,226 ms</td><td class="delta-pos">+4,569 ms</td></tr>
+<tr class=""><td>maestro_init</td><td>9</td><td>1,462 ms</td><td>1,588 ms</td><td>—</td><td>—</td><td>—</td><td class="delta-zero">—</td><td class="delta-zero">—</td></tr>
+<tr class=""><td>driver_setup</td><td>9</td><td>3,850 ms</td><td>5,501 ms</td><td>—</td><td>—</td><td>—</td><td class="delta-zero">—</td><td class="delta-zero">—</td></tr>
+<tr class=""><td>device_info</td><td>9</td><td>209 ms</td><td>224 ms</td><td>—</td><td>—</td><td>—</td><td class="delta-zero">—</td><td class="delta-zero">—</td></tr>
+<tr class=""><td>Define variables</td><td>9</td><td>3 ms</td><td>4 ms</td><td>—</td><td>—</td><td>—</td><td class="delta-zero">—</td><td class="delta-zero">—</td></tr>
+<tr class=""><td>Apply configuration</td><td>9</td><td>1 ms</td><td>1 ms</td><td>—</td><td>—</td><td>—</td><td class="delta-zero">—</td><td class="delta-zero">—</td></tr>
+<tr class=""><td>Launch app</td><td>9</td><td>1,462 ms</td><td>1,556 ms</td><td>—</td><td>—</td><td>—</td><td class="delta-zero">—</td><td class="delta-zero">—</td></tr>
+<tr class=""><td>Tap on OK dialog</td><td>9</td><td>3,975 ms</td><td>4,802 ms</td><td>—</td><td>—</td><td>—</td><td class="delta-zero">—</td><td class="delta-zero">—</td></tr>
+<tr class=""><td>Tap on search container</td><td>9</td><td>4,046 ms</td><td>4,152 ms</td><td>—</td><td>—</td><td>—</td><td class="delta-zero">—</td><td class="delta-zero">—</td></tr>
+<tr class=""><td>Erase text</td><td>900</td><td>4,101 ms</td><td>6,819 ms</td><td>—</td><td>—</td><td>—</td><td class="delta-zero">—</td><td class="delta-zero">—</td></tr>
+<tr class=""><td>Input text BrowserStack</td><td>900</td><td>3,454 ms</td><td>11.9s</td><td>—</td><td>—</td><td>—</td><td class="delta-zero">—</td><td class="delta-zero">—</td></tr>
+<tr class=""><td>Assert Software company text visible</td><td>900</td><td>459 ms</td><td>1,091 ms</td><td>—</td><td>—</td><td>—</td><td class="delta-zero">—</td><td class="delta-zero">—</td></tr>
+<tr class=""><td>Per-rep total</td><td>900</td><td>8,579 ms</td><td>20.1s</td><td>—</td><td>—</td><td>—</td><td class="delta-zero">—</td><td class="delta-zero">—</td></tr>
+<tr class=""><td>stop</td><td>9</td><td>669 ms</td><td>735 ms</td><td>—</td><td>—</td><td>—</td><td class="delta-zero">—</td><td class="delta-zero">—</td></tr>
+<tr class="highlight"><td>maestro_total</td><td>9</td><td>1205.4s</td><td>1253.4s</td><td>97</td><td>1122.2s</td><td>1135.8s</td><td class="delta-neg">-83.2s</td><td class="delta-neg">-117.6s</td></tr>
+<tr class="highlight"><td>session_total</td><td>9</td><td>1207.9s</td><td>1255.8s</td><td>97</td><td>1139.0s</td><td>1155.8s</td><td class="delta-neg">-68.9s</td><td class="delta-neg">-100.0s</td></tr>
+<tr class="dual-tc"><td>tc_a_duration</td><td>—</td><td>—</td><td>—</td><td>97</td><td>528.0s</td><td>532.0s</td><td class="delta-zero">—</td><td class="delta-zero">—</td></tr>
+<tr class="dual-tc"><td>tc_b_duration</td><td>—</td><td>—</td><td>—</td><td>97</td><td>527.0s</td><td>531.0s</td><td class="delta-zero">—</td><td class="delta-zero">—</td></tr>
+<tr class="dual-tc"><td>tc_combined_duration</td><td>—</td><td>—</td><td>—</td><td>97</td><td>1055.0s</td><td>1063.0s</td><td class="delta-zero">—</td><td class="delta-zero">—</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size: 13px; color: var(--ink-muted);">
+    Per-step rows (Maestro startup, Flow execution) populate local but not cloud —
+    BigQuery surfaces only Aggregates-level cloud metrics. The
+    <span style="color:var(--accent-deep)">tc_*</span> rows are the dual-yaml
+    breakdown unique to this Android cloud pattern.
+  </p>
+</section>
+
+<section>
+  <h2>How we measured</h2>
+  <ul>
+    <li>Cloud build ID: <code>8ed0b0edc7e137a39670472e4855b521e04a6889</code></li>
+    <li>Cloud query: <code>browserstack-production.app_automate.app_automate_test_sessions_partitioned</code> filtered by <code>build_id</code> and <code>JSON_VALUE(test_status, '$.error') = '0'</code> (excludes the 3 errored sessions per gotcha #16).</li>
+    <li>Per-tc durations: <code>/maestro/v2/builds/8ed0b0edc7e1…/sessions/{sid}</code> for each passed session; combined view = raw per-session sum of test_a + test_b.</li>
+    <li>Local baseline: pinned to <code>android/local/results/local_android_*_20260510_231553.csv</code>, OnePlus 9R + Maestro 1.39.13 + Wikipedia Alpha + selector-based search loop.</li>
+  </ul>
+</section>
+
+<footer>
+  Generated by <a href="https://github.com/vinit-09/perf_bench_maestro">aggregate_android_cloud_report.py</a>
+  · Build 8ed0b0edc7e137a39670472e4855b521e04a6889 · 97/100 passed
+</footer>
+
+</body>
+</html>
