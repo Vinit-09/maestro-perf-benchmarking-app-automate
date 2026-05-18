@@ -1,0 +1,38 @@
+{
+  "_meta": {
+    "purpose": "U2 diagnostic — verify BQ dual-tc row shape for smoke build",
+    "queried": "2026-05-18",
+    "build_id": "6cbf79e4af4872135a2eb0373c6498e28c61cbfb",
+    "smoke_run_dir": "results/cloud_20260513_183231",
+    "session_total_duration_s_from_runner": 1153,
+    "tc_count_in_build_json": 2
+  },
+  "_finding_summary": "BQ app_automate_test_sessions_partitioned returns ONE ROW PER SESSION, regardless of how many testcases the session contains. The test_status field is a JSON-stringified counts breakdown (passed/failed/timedout/skipped/error/running/queued) — per-tc COUNTS only, NOT per-tc durations. The duration field is session-level total (1153 s for the smoke). No separate per-testcase table exists in the app_automate dataset (verified via INFORMATION_SCHEMA.TABLES LIKE '%testcase%' / '%maestro%').",
+  "_implication_for_u4": "Per-tc duration breakdown must come from the local BS Maestro v2 build JSON (results/<run-id>/<build-id>.json, nested devices[].sessions[].testcases[] structure), not BQ. The report's session-level percentile tables (matching iOS 'Cloud — phase percentiles (BigQuery)' section) can use BQ; the dual-yaml-mechanics section's per-tc duration distribution must use the build JSON.",
+  "row_count": 1,
+  "distinct_session_count": 1,
+  "distinct_build_count": 1,
+  "row": {
+    "hashed_id": "38484f3c3e1e08ed23035985dddaacb0da5f5e20",
+    "build_id": "6cbf79e4af4872135a2eb0373c6498e28c61cbfb",
+    "framework": "maestro",
+    "test_status": {
+      "passed": 2,
+      "failed": 0,
+      "timedout": 0,
+      "skipped": 0,
+      "error": 0,
+      "running": 0,
+      "queued": 0
+    },
+    "user_marked_status": null,
+    "execution_s": 1153.0,
+    "firecmd_ms": 13581,
+    "app_dl_ms": 220,
+    "app_install_ms": 4918,
+    "test_dl_ms": 75,
+    "test_install_ms": 0,
+    "stop_ms": null,
+    "device_region": "ap-south-1"
+  }
+}
