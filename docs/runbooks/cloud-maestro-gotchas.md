@@ -336,7 +336,8 @@ is issued. Visually similar to #1 (instrumentation stall), but the
 fingerprints are different and the kill is later. Documented on
 2026-05-18 against build `8ed0b0edc7e137a39670472e4855b521e04a6889` (100-session
 multitest baseline on Samsung Galaxy S24-14.0, tag `multitest-100x-baseline`,
-1/100 sessions affected).
+**3/100 sessions affected — all 3 on the same physical unit
+`RZCX60PWTST`**).
 
 **Diagnosis fingerprint:**
 
@@ -368,17 +369,33 @@ watchdog fires and BS marks the tc errored. Both tcs in a `multitest`-style
 session are affected because BS routes a session's tcs to the same physical
 unit serially — if the unit isn't usable for tc-1, tc-2 hits the same fate.
 
-**Pool-allocation observation:** the failing unit appears as a single
-hostname in the build (e.g., `RZCX60PWTST` in the evidence build). A sample
-of 8 passed sessions in the same build hit 8 distinct hostnames — BS does
-spread sessions across many physical units. The pattern looks like a
-one-off bad-unit allocation rather than a pool-wide health issue. With a
-larger sample of failing builds we may see hostnames repeat or correlate to
-specific time windows — track in future runs.
+**Pool-allocation observation — hostname-deterministic, unlike gotcha #1:**
+in the evidence build, ALL THREE errored sessions hit the same physical unit
+`RZCX60PWTST` with byte-identical fingerprints (duration 320/325/322 s,
+empty stacktrace, identical `error.message`). A sample of 8 passed sessions
+in the same build hit 8 distinct other hostnames — BS spreads sessions
+across many units, but **kept re-allocating `RZCX60PWTST` for 3 attempts
+and got the same failure each time**.
 
-**Mitigation:** no direct fix. Retry the failed session (re-trigger a single-
-device build, or re-run that session via the dashboard). The same
-hostname may not be re-allocated.
+This is the key distinction from gotcha #1, which explicitly noted hostname
+determinism was *not* the pattern on OnePlus 12R-14.0 in ap-south. On
+Samsung Galaxy S24-14.0 in ap-south, this build shows a single physically
+sick unit that BS does not pull from the pool despite repeated failures.
+The behavior may be device-pool-dependent — track in future runs.
+
+**Mitigation options (none ideal):**
+
+1. **Retry the failed session** — re-trigger a single-device build for the
+   failed `session_id`. BS may pick the same sick unit again; no API to
+   exclude a hostname.
+2. **Identify the bad hostname early and abort manually** — once the first
+   error lands, fetch its maestro log, grep for `Selected device <hostname>`,
+   and abort the build via the BS dashboard (gotcha #2 — no API stop). Saves
+   the next 2 sessions BS would have wasted on the same unit. This adds
+   operator overhead and is only worth it for large multi-session benchmarks.
+3. **Accept the loss for benchmark runs** — exclude affected sessions from
+   percentile aggregation (per #1's mitigation pattern). At 3/100 = 3 %
+   incidence with stable identification, the impact on P50/P90/P95 is small.
 
 **Reporting:** for benchmark runs, exclude #16-pattern sessions from
 percentile aggregation the same way #1-pattern sessions are excluded — the
@@ -387,7 +404,10 @@ incident count in the report's methodology / "Build health" section
 alongside #1 incidents.
 
 **Evidence builds:**
-- `8ed0b0edc7e137a39670472e4855b521e04a6889` (session `2d629ae8da089233fac20b2a72a80d0012152a6a` on hostname `RZCX60PWTST`, 1 incident in 100 sessions, 2026-05-18)
+- `8ed0b0edc7e137a39670472e4855b521e04a6889` (2026-05-18, Samsung Galaxy S24-14.0, 3/100 sessions affected — all on hostname `RZCX60PWTST`):
+  - `2d629ae8da089233fac20b2a72a80d0012152a6a` — duration 320 s
+  - `96ad72313785ef…` — duration 325 s
+  - `a29ad8e2cc1c25…` — duration 322 s
 
 ---
 
