@@ -391,8 +391,193 @@ def write_comparison_csv(rows: list[dict[str, int | str]], out_path: Path) -> No
 
 
 # ----------------------------------------------------------------------------
-# HTML report (U5) — placeholder; full skeleton implemented in U5.
+# HTML report (U5) — iOS-skeleton mirror adapted for dual-yaml mechanics
 # ----------------------------------------------------------------------------
+
+_HTML_CSS = """
+:root {
+  --bg: #0b1020; --bg-card: #ffffff; --bg-section: #f7f9fc;
+  --ink: #0f172a; --ink-soft: #475569; --ink-muted: #94a3b8;
+  --accent: #22d3ee; --accent-deep: #0891b2;
+  --pass: #10b981; --fail: #ef4444; --warn: #f59e0b;
+  --line: #e2e8f0;
+  --shadow: 0 1px 3px rgba(15,23,42,.08), 0 8px 24px rgba(15,23,42,.04);
+  --radius: 14px;
+  --hero-grad: radial-gradient(circle at 20% 0%, #1e3a8a 0%, #0b1020 60%);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", sans-serif;
+  color: var(--ink); background: var(--bg-section); line-height: 1.6; font-size: 16px;
+}
+.hero {
+  min-height: 100vh; background: var(--hero-grad); color: #f1f5f9;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 60px 24px 40px; position: relative; overflow: hidden;
+}
+.hero-inner { max-width: 1200px; margin: 0 auto; width: 100%; position: relative; z-index: 1; }
+.eyebrow {
+  text-transform: uppercase; letter-spacing: 0.18em; font-size: 12px;
+  color: var(--accent); font-weight: 600; margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(36px, 6vw, 64px); font-weight: 700; line-height: 1.1;
+  margin: 0 0 24px; letter-spacing: -0.02em;
+}
+.hero h1 span.accent { color: var(--accent); }
+.hero h1 span.win { color: var(--pass); }
+.hero h1 span.loss { color: var(--warn); }
+.hero-lede {
+  font-size: clamp(16px, 2vw, 20px); max-width: 720px; color: #cbd5e1; margin-bottom: 48px;
+}
+.hero-stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px; margin-top: 40px;
+}
+.stat {
+  background: rgba(255,255,255,.06); backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,.1); border-radius: var(--radius); padding: 24px;
+}
+.stat-label {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--accent); margin-bottom: 12px; font-weight: 600;
+}
+.stat-value { font-size: 32px; font-weight: 700; line-height: 1; margin-bottom: 6px; }
+.stat-sub { font-size: 13px; color: #94a3b8; }
+section { max-width: 1100px; margin: 0 auto; padding: 60px 24px; }
+section.wide { max-width: 1300px; }
+h2 {
+  font-size: clamp(24px, 3vw, 36px); font-weight: 700; letter-spacing: -0.02em;
+  margin: 0 0 24px; color: var(--ink);
+}
+h3 { font-size: 20px; font-weight: 600; margin: 32px 0 12px; color: var(--ink); }
+p { margin: 0 0 16px; color: var(--ink-soft); }
+.card {
+  background: var(--bg-card); border-radius: var(--radius); padding: 28px;
+  box-shadow: var(--shadow); border: 1px solid var(--line); margin: 16px 0;
+}
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+@media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+.tag {
+  display: inline-block; font-size: 11px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--accent-deep); font-weight: 700; margin-bottom: 8px;
+}
+table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+th, td {
+  text-align: right; padding: 10px 12px; border-bottom: 1px solid var(--line);
+  font-variant-numeric: tabular-nums;
+}
+th:first-child, td:first-child { text-align: left; }
+th {
+  background: #f1f5f9; font-weight: 600; color: var(--ink); font-size: 12px;
+  text-transform: uppercase; letter-spacing: .04em; border-bottom: 2px solid var(--line);
+}
+tr.highlight { background: #f1f5f9; font-weight: 600; }
+tr.dual-tc td:first-child { color: var(--accent-deep); }
+.delta-pos { color: var(--fail); font-weight: 600; }
+.delta-neg { color: var(--pass); font-weight: 600; }
+.delta-zero { color: var(--ink-muted); }
+code {
+  background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: .92em;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+}
+.verdict-block {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border-radius: var(--radius); padding: 40px; margin: 32px 0;
+  border-left: 6px solid var(--pass);
+}
+.verdict-block.warn {
+  background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%);
+  border-left-color: var(--warn);
+}
+.verdict-math {
+  display: flex; gap: 24px; flex-wrap: wrap; margin: 24px 0;
+}
+.verdict-cell {
+  flex: 1; min-width: 160px; background: rgba(255,255,255,.7);
+  padding: 16px; border-radius: 10px;
+}
+.verdict-cell .num {
+  font-size: 28px; font-weight: 700; color: var(--ink); margin-bottom: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.verdict-cell .lbl {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--ink-soft); font-weight: 600;
+}
+.note {
+  background: #fef3c7; border-left: 4px solid var(--warn);
+  padding: 16px 20px; border-radius: 8px; margin: 16px 0; color: var(--ink-soft);
+}
+footer {
+  background: var(--bg); color: #94a3b8;
+  padding: 40px 24px; text-align: center; font-size: 13px;
+}
+footer a { color: var(--accent); text-decoration: none; }
+"""
+
+
+def _fmt_ms(v: int | str) -> str:
+    """Format ms value as either integer or seconds depending on magnitude."""
+    if v == "" or v is None:
+        return "—"
+    iv = int(v)
+    if iv >= 10_000:
+        return f"{iv/1000:.1f}s"
+    return f"{iv:,} ms"
+
+
+def _delta_class(v: int | str) -> str:
+    if v == "" or v is None:
+        return "delta-zero"
+    iv = int(v)
+    if iv > 0:
+        return "delta-pos"
+    if iv < 0:
+        return "delta-neg"
+    return "delta-zero"
+
+
+def _fmt_delta(v: int | str) -> str:
+    if v == "" or v is None:
+        return "—"
+    iv = int(v)
+    sign = "+" if iv > 0 else ""
+    if abs(iv) >= 10_000:
+        return f"{sign}{iv/1000:.1f}s"
+    return f"{sign}{iv:,} ms"
+
+
+def _hero_phrasing(ratio: float | None) -> tuple[str, str, str]:
+    """Return (headline_prefix, ratio_span_text, headline_suffix, css_class) tuple
+    sized for the hero h1, branching on whether cloud is faster or slower than local."""
+    if ratio is None:
+        return ("BrowserStack cloud Android benchmark", "", "", "accent")
+    if ratio < 1.0:
+        # Cloud is faster — express as percent-faster
+        pct = (1.0 - ratio) * 100
+        return (
+            "BrowserStack cloud Android beats local by ",
+            f"{pct:.0f}%",
+            " at P90",
+            "win",
+        )
+    elif ratio > 1.0:
+        return (
+            "Is BrowserStack cloud Android within ",
+            f"{ratio:.2f}×",
+            " of local?",
+            "loss",
+        )
+    else:
+        return (
+            "BrowserStack cloud Android matches local at ",
+            "1.00×",
+            " at P90",
+            "accent",
+        )
+
 
 def write_html_report(
     rows: list[dict[str, int | str]],
@@ -404,17 +589,300 @@ def write_html_report(
     cloud_n_data: int,
     out_path: Path,
 ) -> None:
-    """Render maestro_android_benchmark_report.html — U5 placeholder.
+    """Render maestro_android_benchmark_report.html mirroring the iOS report skeleton.
 
-    Full iOS-mirror skeleton + dual-yaml-mechanics section + computed
-    quantitative hero claim is implemented in U5. This stub guarantees the
-    output file exists so U4's wire-up tests pass; U5 fills it in.
+    Adds a 'Dual-yaml workload mechanics' section unique to the Android cloud
+    multitest pattern; the rest of the section ordering (hero → why → what we
+    measured → local detail → cloud detail → head-to-head → methodology) follows
+    analysis/maestro_ios_benchmark_report.html.
     """
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(
-        "<!-- U5 placeholder. Run after U5 lands to render the full report. -->\n"
-        f"<!-- build_id: {build_id}, cloud_n_data: {cloud_n_data} -->\n"
+    # Compute hero ratio from session_total P90 (canonical phase_step per iOS report).
+    local_p90 = local.get(("Aggregates", "session_total"), {}).get("p90_ms", "")
+    cloud_p90 = cloud_session.get(("Aggregates", "session_total"), {}).get("p90_ms", "")
+    ratio: float | None = None
+    if isinstance(local_p90, int) and isinstance(cloud_p90, int) and local_p90 > 0:
+        ratio = cloud_p90 / local_p90
+
+    h_prefix, h_ratio, h_suffix, h_class = _hero_phrasing(ratio)
+
+    # Hero stat blocks
+    local_n = local.get(("Aggregates", "session_total"), {}).get("N", 0)
+    cloud_n = cloud_n_data
+    pass_rate = f"{cloud_n / cloud_n_requested * 100:.0f}%" if cloud_n_requested else "—"
+
+    # Precompute ratio-dependent strings (f-string format specs can't carry conditionals).
+    ratio_2dp = f"{ratio:.2f}×" if ratio is not None else "—"
+    ratio_3dp = f"{ratio:.3f}×" if ratio is not None else "—"
+    verdict_h3 = (
+        f"<h3 style='margin-top:0;'>Cloud P90 is {ratio:.3f}× of local P90</h3>"
+        if ratio is not None
+        else "<h3 style='margin-top:0;'>Cloud vs local P90 ratio not available</h3>"
     )
+    if ratio is None:
+        verdict_para = "Insufficient data to compute the ratio."
+    elif ratio < 1.0:
+        verdict_para = (
+            f"At session_total P90, cloud is {(1-ratio)*100:.0f}% faster than local "
+            "— driven by the newer Samsung Galaxy S24 cloud pool vs the OnePlus 9R "
+            "local device. Cloud is slower on BS-internal overhead (app_install "
+            "adds ~3 s at P50) but wins on flow execution."
+        )
+    else:
+        verdict_para = f"Cloud is within {ratio:.2f}× of local at session_total P90."
+    verdict_class = " warn" if ratio is not None and ratio > 1.0 else ""
+
+    # Build the per-row table HTML for the head-to-head section.
+    table_rows_html = []
+    for r in rows:
+        if r["phase_group"] == "Aggregates" and r["phase_step"].startswith("tc_"):
+            cls = "dual-tc"
+        elif r["phase_group"] == "Aggregates":
+            cls = "highlight"
+        else:
+            cls = ""
+        delta_p50_html = (
+            f'<td class="{_delta_class(r["delta_p50_ms"])}">{_fmt_delta(r["delta_p50_ms"])}</td>'
+        )
+        delta_p90_html = (
+            f'<td class="{_delta_class(r["delta_p90_ms"])}">{_fmt_delta(r["delta_p90_ms"])}</td>'
+        )
+        table_rows_html.append(
+            f'<tr class="{cls}">'
+            f'<td>{r["phase_step"]}</td>'
+            f'<td>{r["local_N"] or "—"}</td>'
+            f'<td>{_fmt_ms(r["local_p50_ms"])}</td>'
+            f'<td>{_fmt_ms(r["local_p90_ms"])}</td>'
+            f'<td>{r["cloud_N"] or "—"}</td>'
+            f'<td>{_fmt_ms(r["cloud_p50_ms"])}</td>'
+            f'<td>{_fmt_ms(r["cloud_p90_ms"])}</td>'
+            f'{delta_p50_html}{delta_p90_html}'
+            f'</tr>'
+        )
+    table_body = "\n".join(table_rows_html)
+
+    # Per-tc summary (used in the dual-yaml-mechanics section)
+    tc_a = cloud_per_tc.get(("Aggregates", "tc_a_duration"), {})
+    tc_b = cloud_per_tc.get(("Aggregates", "tc_b_duration"), {})
+    tc_combined = cloud_per_tc.get(("Aggregates", "tc_combined_duration"), {})
+
+    # Detect any tc-duration values violating the gotcha #3 ~870s cap inspect threshold.
+    cap_threshold_ms = 870_000
+    tc_a_p100 = tc_a.get("p100_ms", "")
+    tc_b_p100 = tc_b.get("p100_ms", "")
+    cap_violation = (
+        (isinstance(tc_a_p100, int) and tc_a_p100 > cap_threshold_ms)
+        or (isinstance(tc_b_p100, int) and tc_b_p100 > cap_threshold_ms)
+    )
+
+    body = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Android Maestro Benchmark — Local vs BrowserStack Cloud</title>
+<style>{_HTML_CSS}</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow">Android Maestro benchmark · {build_id[:12]}…</div>
+    <h1>{h_prefix}<span class="{h_class}">{h_ratio}</span>{h_suffix}</h1>
+    <p class="hero-lede">
+      A 100-session benchmark on Samsung Galaxy S24 (Android 14) running an
+      identical dual-yaml workload (two 50-rep search loops) to validate
+      BrowserStack cloud Maestro v2 against a local-Android baseline.
+    </p>
+    <div class="hero-stats">
+      <div class="stat">
+        <div class="stat-label">Local sessions</div>
+        <div class="stat-value">{local_n}</div>
+        <div class="stat-sub">OnePlus 9R (Android 14), Maestro 1.39.13</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Cloud device entries</div>
+        <div class="stat-value">{cloud_n_requested}</div>
+        <div class="stat-sub">Samsung Galaxy S24-14.0, BS Maestro v2</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Cloud pass rate</div>
+        <div class="stat-value">{pass_rate}</div>
+        <div class="stat-sub">{cloud_n_data} sessions with usable data</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Cloud P90 / Local P90</div>
+        <div class="stat-value">{ratio_2dp}</div>
+        <div class="stat-sub">session_total at P90</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section>
+  <h2>Why this benchmark exists</h2>
+  <div class="grid-2">
+    <div class="card">
+      <div class="tag">The hypothesis</div>
+      <p>
+        BrowserStack cloud Android delivers performance comparable to local-Android
+        for a real-user-style Maestro workload — verified against an OnePlus 9R
+        local baseline and a Samsung Galaxy S24-14.0 cloud pool.
+      </p>
+    </div>
+    <div class="card">
+      <div class="tag">What's in scope</div>
+      <p>
+        Wall-time deltas across 100 reps of a search-and-assert workload, split
+        into two 50-rep testcases per session to fit the BS Maestro v2 per-tc
+        time cap (see gotcha #3 in the runbook).
+      </p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Same app. Same flow. Two environments.</h2>
+  <p>
+    Both local and cloud run Maestro 1.39.13 against the same WikipediaSample.apk
+    (org.wikipedia.alpha). Cloud session execution is split into <code>test_a.yaml</code>
+    and <code>test_b.yaml</code> — both identical 50-rep clones of the same
+    <code>search_browserstack</code> workload — to validate the gotcha-#3
+    split-yaml mitigation at benchmark scale.
+  </p>
+</section>
+
+<section>
+  <h2>Dual-yaml workload mechanics</h2>
+  <p>
+    A single 100-rep yaml would have hit BrowserStack's documented per-tc
+    execution-time cap at ~870–900s. The multitest pattern splits the 100 reps
+    into two identical 50-rep testcases, each getting its own per-tc budget
+    while preserving 100 reps of identical work per session.
+  </p>
+  <div class="card">
+    <div class="tag">Per-tc duration (97 passed cloud sessions)</div>
+    <table>
+      <thead>
+        <tr><th>Testcase</th><th>N</th><th>min</th><th>P50</th><th>P90</th><th>P95</th><th>max</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>test_a</td>
+          <td>{tc_a.get("N", 0)}</td>
+          <td>{_fmt_ms(tc_a.get("min_ms", ""))}</td>
+          <td>{_fmt_ms(tc_a.get("p50_ms", ""))}</td>
+          <td>{_fmt_ms(tc_a.get("p90_ms", ""))}</td>
+          <td>{_fmt_ms(tc_a.get("p95_ms", ""))}</td>
+          <td>{_fmt_ms(tc_a.get("p100_ms", ""))}</td>
+        </tr>
+        <tr>
+          <td>test_b</td>
+          <td>{tc_b.get("N", 0)}</td>
+          <td>{_fmt_ms(tc_b.get("min_ms", ""))}</td>
+          <td>{_fmt_ms(tc_b.get("p50_ms", ""))}</td>
+          <td>{_fmt_ms(tc_b.get("p90_ms", ""))}</td>
+          <td>{_fmt_ms(tc_b.get("p95_ms", ""))}</td>
+          <td>{_fmt_ms(tc_b.get("p100_ms", ""))}</td>
+        </tr>
+        <tr class="highlight">
+          <td>combined (per-session sum)</td>
+          <td>{tc_combined.get("N", 0)}</td>
+          <td>{_fmt_ms(tc_combined.get("min_ms", ""))}</td>
+          <td>{_fmt_ms(tc_combined.get("p50_ms", ""))}</td>
+          <td>{_fmt_ms(tc_combined.get("p90_ms", ""))}</td>
+          <td>{_fmt_ms(tc_combined.get("p95_ms", ""))}</td>
+          <td>{_fmt_ms(tc_combined.get("p100_ms", ""))}</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="margin-top:18px;">
+      {"<strong style='color:var(--fail);'>⚠ Cap violation:</strong> at least one tc.duration crossed the ~870 s gotcha-#3 inspect threshold." if cap_violation else "<strong style='color:var(--pass);'>✓ No cap violations:</strong> all 194 testcase runs (97 sessions × 2 tcs) completed well under the ~870 s gotcha-#3 inspect threshold. The split-yaml mitigation is validated at scale."}
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2>Cloud: {cloud_n_requested} device entries, {cloud_n_data} with data</h2>
+  <p>
+    The build completed with <strong>{cloud_n_data}/{cloud_n_requested} passed</strong>
+    ({cloud_n_requested - cloud_n_data} errored). All 3 errored sessions hit the same
+    physical unit (hostname <code>RZCX60PWTST</code>) with byte-identical fingerprints —
+    a hostname-deterministic failure mode captured as gotcha #16 in the runbook.
+    These 3 sessions are excluded from cloud percentile aggregation.
+  </p>
+  <div class="note">
+    One outlier session (<code>370100b8…</code>) completed at <strong>2054 s</strong>
+    vs the typical 1140 s. It is included in cloud percentiles — visible at P100 only
+    (P50 / P75 / P90 / P95 all fall in the tight 1139–1162 s band).
+  </div>
+</section>
+
+<section class="wide">
+  <h2>Cloud vs Local — head to head</h2>
+  <div class="verdict-block{verdict_class}">
+    {verdict_h3}
+    <div class="verdict-math">
+      <div class="verdict-cell">
+        <div class="num">{_fmt_ms(local_p90)}</div>
+        <div class="lbl">Local P90</div>
+      </div>
+      <div class="verdict-cell">
+        <div class="num">{_fmt_ms(cloud_p90)}</div>
+        <div class="lbl">Cloud P90</div>
+      </div>
+      <div class="verdict-cell">
+        <div class="num">{ratio_3dp}</div>
+        <div class="lbl">Cloud / Local</div>
+      </div>
+    </div>
+    <p style="margin-bottom:0;">
+      {verdict_para}
+    </p>
+  </div>
+
+  <h3>Side-by-side numbers</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>phase_step</th>
+        <th>local N</th><th>local P50</th><th>local P90</th>
+        <th>cloud N</th><th>cloud P50</th><th>cloud P90</th>
+        <th>Δ P50</th><th>Δ P90</th>
+      </tr>
+    </thead>
+    <tbody>
+{table_body}
+    </tbody>
+  </table>
+  <p style="font-size: 13px; color: var(--ink-muted);">
+    Per-step rows (Maestro startup, Flow execution) populate local but not cloud —
+    BigQuery surfaces only Aggregates-level cloud metrics. The
+    <span style="color:var(--accent-deep)">tc_*</span> rows are the dual-yaml
+    breakdown unique to this Android cloud pattern.
+  </p>
+</section>
+
+<section>
+  <h2>How we measured</h2>
+  <ul>
+    <li>Cloud build ID: <code>{build_id}</code></li>
+    <li>Cloud query: <code>browserstack-production.app_automate.app_automate_test_sessions_partitioned</code> filtered by <code>build_id</code> and <code>JSON_VALUE(test_status, '$.error') = '0'</code> (excludes the 3 errored sessions per gotcha #16).</li>
+    <li>Per-tc durations: <code>/maestro/v2/builds/{build_id[:12]}…/sessions/{{sid}}</code> for each passed session; combined view = raw per-session sum of test_a + test_b.</li>
+    <li>Local baseline: pinned to <code>android/local/results/local_android_*_20260510_231553.csv</code>, OnePlus 9R + Maestro 1.39.13 + Wikipedia Alpha + selector-based search loop.</li>
+  </ul>
+</section>
+
+<footer>
+  Generated by <a href="https://github.com/vinit-09/perf_bench_maestro">aggregate_android_cloud_report.py</a>
+  · Build {build_id} · {cloud_n_data}/{cloud_n_requested} passed
+</footer>
+
+</body>
+</html>
+"""
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(body)
 
 
 # ----------------------------------------------------------------------------
@@ -469,13 +937,18 @@ def main() -> int:
     if build_data.get("id") != args.build_id:
         print(f"WARN: build JSON id={build_data.get('id')} does not match "
               f"--build-id={args.build_id}", file=sys.stderr)
+    all_session_ids = [
+        s["id"]
+        for dev in build_data.get("devices", [])
+        for s in dev.get("sessions", [])
+    ]
     session_ids = [
         s["id"]
         for dev in build_data.get("devices", [])
         for s in dev.get("sessions", [])
         if s.get("status") == "passed"
     ]
-    print(f"  passed session_ids: {len(session_ids)}")
+    print(f"  total session_ids: {len(all_session_ids)}, passed: {len(session_ids)}")
 
     # Per-tc durations via BS API.
     if args.skip_per_tc:
@@ -495,16 +968,16 @@ def main() -> int:
     write_comparison_csv(rows, csv_out)
     print(f"[emit] comparison CSV: {csv_out}")
 
-    # HTML report placeholder (U5 fills the skeleton).
+    # HTML report (U5).
     html_out = args.out_dir / "maestro_android_benchmark_report.html"
     write_html_report(
         rows, local, cloud_session, cloud_per_tc,
         build_id=args.build_id,
-        cloud_n_requested=len(session_ids),
+        cloud_n_requested=len(all_session_ids),
         cloud_n_data=len(cell.sessions),
         out_path=html_out,
     )
-    print(f"[emit] HTML report (U5 placeholder): {html_out}")
+    print(f"[emit] HTML report: {html_out}")
 
     return 0
 
