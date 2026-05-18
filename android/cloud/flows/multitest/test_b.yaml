@@ -1,0 +1,18 @@
+appId: org.wikipedia.alpha
+tags:
+  - benchmark
+  - multitest-b
+---
+# Multi-test probe — file B. Second half of the original 100-rep workload.
+- launchApp
+- tapOn:
+    text: "OK"
+    optional: true
+- tapOn:
+    id: "org.wikipedia.alpha:id/search_container"
+- repeat:
+    times: 50
+    commands:
+      - eraseText
+      - inputText: "BrowserStack"
+      - assertVisible: "Software company based in India"
