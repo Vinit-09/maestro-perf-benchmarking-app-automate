@@ -1,0 +1,30 @@
+appId: org.wikipedia.alpha
+tags:
+  - benchmark
+---
+# Sized to ~1198 s execution_ms (Maestro Android P90 target from
+# PROD-Framework Performance Benchmarking spec) on the OnePlus 9R / Android 14.
+# Recalibrated on 2026-05-10 against the current LE2101 (CloudDPC-managed
+# work profile — Play Protect cannot be disabled; stay_on_while_plugged_in
+# stuck at 15 instead of 7).
+#
+# A first calibration attempt (162 reps from smoke 20260510_165305 per-rep
+# p50 = 7.38 s) overshot badly — iter 1 of run 20260510_170411 landed at
+# session_total ≈ 1930 s (effective per-rep ~11.8 s in steady state, almost
+# 60% above the smoke-extrapolated value because Wikipedia's in-app state /
+# memory pressure grow over a long loop).
+#
+# Settled on N = 100 reps. Smoke per-rep p50 doesn't extrapolate, so accept
+# whatever P90 lands and recalibrate from a real 10-iter dataset.
+- launchApp
+- tapOn:
+    text: "OK"
+    optional: true
+- tapOn:
+    id: "org.wikipedia.alpha:id/search_container"
+- repeat:
+    times: 100
+    commands:
+      - eraseText
+      - inputText: "BrowserStack"
+      - assertVisible: "Software company based in India"

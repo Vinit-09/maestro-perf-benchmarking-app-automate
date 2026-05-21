@@ -1,0 +1,20 @@
+appId: org.wikipedia.alpha
+tags:
+  - benchmark
+  - smoke
+---
+# Smoke variant of android/local/flows/benchmark_loop.yaml — 2 reps instead
+# of 117 so a single session finishes in seconds, not ~20 minutes. Used to
+# verify device wiring, app install, and selector validity before a long run.
+- launchApp
+- tapOn:
+    text: "OK"
+    optional: true
+- tapOn:
+    id: "org.wikipedia.alpha:id/search_container"
+- repeat:
+    times: 2
+    commands:
+      - eraseText
+      - inputText: "BrowserStack"
+      - assertVisible: "Software company based in India"

@@ -1,0 +1,18 @@
+phase_group,phase_step,N,min_ms,p50_ms,p75_ms,p90_ms,p95_ms,p100_ms
+Pre-Maestro,device_readiness,9,109,141,143,150,153,157
+Pre-Maestro,app_install,9,1472,1672,1842,1995,2037,2079
+Maestro startup,maestro_init,9,1184,1462,1531,1588,1596,1604
+Maestro startup,driver_setup,9,3344,3850,4465,5501,7063,8626
+Maestro startup,device_info,9,194,209,223,224,224,225
+Flow execution,Define variables,9,3,3,4,4,5,7
+Flow execution,Apply configuration,9,0,1,1,1,1,1
+Flow execution,Launch app,9,1228,1462,1480,1556,1591,1626
+Flow execution,Tap on OK dialog,9,3645,3975,4168,4802,5339,5877
+Flow execution,Tap on search container,9,3784,4046,4086,4152,4189,4227
+Flow execution,Erase text,900,2350,4101,4523,6819,12808,52335
+Flow execution,Input text BrowserStack,900,2797,3454,5648,11870,15665,36868
+Flow execution,Assert Software company text visible,900,202,459,570,1091,4553,40088
+Flow execution,Per-rep total,900,5633,8579,13064,20144,27595,56300
+Post-Maestro,stop,9,532,669,722,735,745,756
+Aggregates,maestro_total,9,1136448,1205416,1246404,1253391,1257891,1262392
+Aggregates,session_total,9,1138943,1207861,1248838,1255756,1260274,1264792
