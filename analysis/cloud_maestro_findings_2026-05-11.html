@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BrowserStack Maestro v2 — Platform Findings (Android, 2026-05-11)</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --bg-card: #ffffff;
+      --bg-section: #f7f9fc;
+      --ink: #0f172a;
+      --ink-soft: #475569;
+      --ink-muted: #94a3b8;
+      --accent: #22d3ee;
+      --accent-deep: #0891b2;
+      --pass: #10b981;
+      --fail: #ef4444;
+      --warn: #f59e0b;
+      --line: #e2e8f0;
+      --shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 8px 24px rgba(15, 23, 42, 0.04);
+      --radius: 14px;
+      --hero-grad: radial-gradient(circle at 20% 0%, #1e3a8a 0%, #0b1020 60%);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", sans-serif;
+      color: var(--ink);
+      background: var(--bg-section);
+      line-height: 1.6;
+      font-size: 16px;
+    }
+
+    /* ----- Hero ----- */
+    .hero {
+      min-height: 88vh;
+      background: var(--hero-grad);
+      color: #f1f5f9;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 60px 24px 40px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 80% 30%, rgba(34, 211, 238, 0.18), transparent 50%);
+      pointer-events: none;
+    }
+    .hero-inner { max-width: 1200px; margin: 0 auto; width: 100%; position: relative; z-index: 1; }
+    .eyebrow {
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 12px;
+      color: var(--accent);
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+    .hero h1 {
+      font-size: clamp(36px, 6vw, 60px);
+      font-weight: 700;
+      line-height: 1.1;
+      margin: 0 0 24px;
+      letter-spacing: -0.02em;
+    }
+    .hero h1 .accent { color: var(--accent); }
+    .hero-lede {
+      font-size: clamp(16px, 2vw, 20px);
+      max-width: 760px;
+      color: #cbd5e1;
+      margin-bottom: 48px;
+    }
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      margin-top: 32px;
+    }
+    .stat {
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius);
+      padding: 22px;
+    }
+    .stat-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    .stat-value {
+      font-size: clamp(26px, 3.5vw, 36px);
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+    .stat-value .unit { font-size: 0.5em; color: var(--ink-muted); font-weight: 400; margin-left: 4px; }
+    .stat-context { font-size: 13px; color: #94a3b8; margin-top: 8px; }
+
+    /* ----- Navigation ----- */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--line);
+      padding: 12px 0;
+    }
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      flex-wrap: nowrap;
+    }
+    .nav a {
+      color: var(--ink-soft);
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .nav a:hover { background: var(--bg-section); color: var(--ink); }
+
+    /* ----- Sections ----- */
+    section {
+      padding: 80px 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    section.alt { background: #fff; max-width: none; padding-left: 0; padding-right: 0; }
+    section.alt > .inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    h2 {
+      font-size: clamp(28px, 4vw, 40px);
+      font-weight: 700;
+      margin: 0 0 16px;
+      letter-spacing: -0.02em;
+    }
+    h3 {
+      font-size: 22px;
+      margin: 32px 0 12px;
+      font-weight: 600;
+    }
+    h4 {
+      font-size: 16px;
+      margin: 16px 0 8px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .section-eyebrow {
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent-deep);
+      margin-bottom: 12px;
+    }
+    .section-lede {
+      font-size: 18px;
+      color: var(--ink-soft);
+      max-width: 800px;
+      margin-bottom: 40px;
+    }
+    p { color: var(--ink); }
+    p.muted { color: var(--ink-soft); }
+
+    /* ----- Cards & Grids ----- */
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--line);
+    }
+    .grid { display: grid; gap: 24px; }
+    .grid.cols-2 { grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); }
+    .grid.cols-3 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+
+    /* ----- Tables ----- */
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin: 16px 0;
+    }
+    th, td {
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+    }
+    th {
+      background: #f8fafc;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--ink-soft);
+    }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    tr:hover td { background: #fafbff; }
+
+    /* ----- Status pills ----- */
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .pill::before { content: "●"; font-size: 8px; }
+    .pill.pass { background: rgba(16, 185, 129, 0.12); color: var(--pass); }
+    .pill.fail { background: rgba(239, 68, 68, 0.12); color: var(--fail); }
+    .pill.warn { background: rgba(245, 158, 11, 0.14); color: #b45309; }
+    .pill.muted { background: #e2e8f0; color: var(--ink-soft); }
+
+    /* ----- Finding callout ----- */
+    .finding {
+      border-left: 4px solid var(--accent);
+      padding: 24px 28px;
+      background: #fff;
+      border-radius: 0 14px 14px 0;
+      box-shadow: var(--shadow);
+    }
+    .finding.cap { border-left-color: var(--warn); }
+    .finding.stall { border-left-color: var(--fail); }
+    .finding-tag {
+      display: inline-block;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #fef3c7;
+      color: #b45309;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    .finding.stall .finding-tag { background: #fee2e2; color: #b91c1c; }
+    .finding h3 { margin-top: 0; }
+
+    /* ----- Code / IDs ----- */
+    code, .mono {
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 13px;
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #334155;
+    }
+
+    /* ----- Copyable build IDs ----- */
+    code.bid {
+      cursor: pointer;
+      position: relative;
+      transition: background 0.15s, color 0.15s;
+      user-select: all;
+    }
+    code.bid:hover {
+      background: #dbeafe;
+      color: var(--accent-deep);
+    }
+    code.bid::after {
+      content: "copy";
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 1px 5px;
+      margin-left: 6px;
+      border-radius: 4px;
+      background: var(--accent-deep);
+      color: #fff;
+      opacity: 0;
+      transition: opacity 0.15s;
+      vertical-align: middle;
+      font-weight: 600;
+    }
+    code.bid:hover::after { opacity: 0.85; }
+    code.bid.copied { background: rgba(16, 185, 129, 0.15); color: var(--pass); }
+    code.bid.copied::after {
+      content: "copied!";
+      background: var(--pass);
+      opacity: 1;
+    }
+    pre.log {
+      background: #0f172a;
+      color: #cbd5e1;
+      padding: 16px 20px;
+      border-radius: 10px;
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 12.5px;
+      line-height: 1.6;
+      overflow-x: auto;
+      margin: 12px 0;
+    }
+    pre.log .key { color: #fbbf24; }
+    pre.log .value { color: #67e8f9; }
+    pre.log .fail { color: #fca5a5; }
+    pre.log .pass { color: #86efac; }
+    pre.log .dim { color: #64748b; }
+
+    /* ----- Side-by-side comparison ----- */
+    .sidebyside {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      margin: 24px 0;
+    }
+    .sidebyside > div { padding: 28px; background: #fff; }
+    .sidebyside > div + div { border-left: 1px solid var(--line); }
+    .sidebyside h4 { margin-top: 0; }
+    .sidebyside .device {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .sidebyside .badge {
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .sidebyside .badge.bad { background: rgba(239, 68, 68, 0.12); color: var(--fail); }
+    .sidebyside .badge.good { background: rgba(16, 185, 129, 0.12); color: var(--pass); }
+    .sidebyside ul { margin: 12px 0; padding-left: 18px; color: var(--ink-soft); }
+    .sidebyside li { margin: 6px 0; }
+    @media (max-width: 720px) {
+      .sidebyside { grid-template-columns: 1fr; }
+      .sidebyside > div + div { border-left: none; border-top: 1px solid var(--line); }
+    }
+
+    /* ----- Reco ----- */
+    .reco {
+      border-left: 4px solid var(--accent);
+      padding: 20px 24px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    .reco h4 { margin: 0 0 8px; font-size: 17px; font-weight: 600; }
+    .reco-impact {
+      display: inline-block;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 3px 10px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .reco-impact.high { background: #fee2e2; color: #b91c1c; }
+    .reco-impact.med { background: #fef3c7; color: #b45309; }
+    .reco-impact.low { background: #ccfbf1; color: #115e59; }
+
+    /* ----- Footer ----- */
+    footer {
+      background: var(--bg);
+      color: #cbd5e1;
+      padding: 48px 24px;
+      text-align: center;
+      font-size: 13px;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<!-- ============= HERO ============= -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow">Field Report · 2026-05-11 · ap-south</div>
+    <h1>BrowserStack Maestro v2 has <span class="accent">two distinct failure modes</span> that don't appear in any docs.</h1>
+    <p class="hero-lede">
+      A full day of probing the cloud Android benchmark pipeline surfaced two
+      platform behaviors that aren't documented anywhere on BrowserStack's side
+      and that both produce session-level <code>failed</code> with empty
+      stacktraces. We pinned each one to a specific fingerprint, established
+      reproducible boundaries, and confirmed which one is device-pool-specific
+      and which one is platform-wide.
+    </p>
+
+    <div class="hero-stats">
+      <div class="stat">
+        <div class="stat-label">Maestro test-duration cap (<code style="background:transparent;color:inherit;font-size:0.85em;">tc.duration</code>)</div>
+        <div class="stat-value">~900<span class="unit">s</span></div>
+        <div class="stat-context">Observed kill band: tc.dur 883–914 s. Independent of <code style="background:transparent;color:inherit;font-size:0.85em;">idleTimeout</code> setting. Verified on 2 device pools.</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">OnePlus 12R-14.0 stall rate</div>
+        <div class="stat-value">100<span class="unit">%</span></div>
+        <div class="stat-context">5/5 probes today. Pool-specific, not Maestro-wide.</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Galaxy S25-15.0 stall rate</div>
+        <div class="stat-value">0<span class="unit">%</span></div>
+        <div class="stat-context">3/3 probes today, same script, same APK, same time window.</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Evidence builds collected</div>
+        <div class="stat-value">11</div>
+        <div class="stat-context">Each with build_id, hostname, log fingerprint. Click any ID to copy.</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ============= NAV ============= -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="#tldr">TL;DR</a>
+    <a href="#cap">tc.duration ~900 s cap</a>
+    <a href="#verify900">Is it 900 s?</a>
+    <a href="#stall">OnePlus stalls</a>
+    <a href="#sidebyside">Side-by-side</a>
+    <a href="#evidence">Evidence builds</a>
+    <a href="#fingerprints">Fingerprints</a>
+    <a href="#recs">Recommendations</a>
+  </div>
+</nav>
+
+<!-- ============= TL;DR ============= -->
+<section id="tldr">
+  <div class="section-eyebrow">Two findings</div>
+  <h2>TL;DR — both failures look identical at the API level. They aren't.</h2>
+  <p class="section-lede">
+    Both produce <code>session.status: "failed"</code>, empty
+    <code>stacktrace</code>, <code>maestro_status: "UNKNOWN"</code>, and
+    <code>completed_flows: 0/0</code>. The difference shows up only when you
+    bucket by <code>tc.duration</code> / <code>session.duration</code> and
+    look at the maestro log tail.
+  </p>
+
+  <div class="card" style="border-left: 4px solid var(--accent-deep); margin-bottom: 28px;">
+    <div class="section-eyebrow" style="color: var(--accent-deep); margin-bottom: 8px;">Precision notes for leadership</div>
+    <p style="margin: 0 0 12px;"><strong>What this report claims, and what it does not.</strong></p>
+    <ol style="margin: 0; padding-left: 20px; color: var(--ink);">
+      <li style="margin-bottom: 10px;">
+        The platform cap is on
+        <strong>Maestro test execution time (<code>tc.duration</code>) at ~900 s</strong>
+        (observed kill band 883–914 s).
+        <code>session.duration</code> at kill looks like 940–975 s because BS
+        adds ~60 s of pre/post-test overhead. The "900 s" number is real; it
+        applies to the <code>tc.duration</code> field, not
+        <code>session.duration</code>.
+      </li>
+      <li style="margin-bottom: 10px;">
+        The cap is <strong>independent of the <code>idleTimeout</code>
+        build-payload key</strong>. Direct comparison: build
+        <code class="bid" data-copy="1687bb73f49b012d4df935bc0e6fbf65d83832e5">1687bb73…832e5</code>
+        (sent <code>idleTimeout: 900</code>) was killed at tc.dur ~889 s;
+        build
+        <code class="bid" data-copy="f3c2c50ae53c8030fdb113cdd8b3878eb5517d46">f3c2c50a…d46</code>
+        (did not send <code>idleTimeout</code>) was killed at tc.dur ~883 s.
+        The cap fires at the same tc.dur regardless of the payload key.
+      </li>
+      <li style="margin-bottom: 10px;">
+        We did <strong>not</strong> verify what <code>idleTimeout</code>
+        actually controls on Maestro v2. BS docs describe it as a no-activity
+        timer, but all our flows had sub-second gaps between commands, so any
+        idle behavior was never exercised. This is an open question, not a
+        finding.
+      </li>
+      <li>
+        We did <strong>not</strong> verify that "splitting the flow across
+        multiple <code>.yaml</code> files in the test_suite zip gives each file
+        its own ~900 s budget." It is a plausible workaround but should be
+        tested before being relied on for a production pipeline.
+      </li>
+    </ol>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="finding cap">
+      <span class="finding-tag">Finding 1 — platform-wide</span>
+      <h3>BS-side cap at <code>tc.duration</code> ≈ 900 s</h3>
+      <p>
+        BS Maestro v2 kills any single Maestro test once Maestro test execution
+        time (<code>tc.duration</code>) reaches ~880–915 s. Corresponding
+        <code>session.duration</code> at kill is ~940–975 s (BS adds ~60 s of
+        pre/post-test overhead). The cap fires <strong>independently of the
+        <code>idleTimeout</code> build-payload key</strong> — verified in builds
+        that explicitly set <code>idleTimeout: 900</code> as well as builds
+        that did not. Verified across two device pools (OnePlus 12R-14.0,
+        Galaxy S25-15.0). Setting <code>sessionTimeout: 1800</code> was
+        silently dropped and did nothing.
+      </p>
+    </div>
+
+    <div class="finding stall">
+      <span class="finding-tag">Finding 2 — device-pool-specific (today's data)</span>
+      <h3>OnePlus 12R-14.0 cold-launch instrumentation stalls</h3>
+      <p>
+        On 2026-05-11, <code>OnePlus 12R-14.0</code> in the
+        <code>ap-south</code> pool stalled on cold-<code>launchApp</code> in
+        every probe (5 / 5) and in ~47 % of a 100-session fleet run.
+        Galaxy S25-15.0 in the same pool, same time window, had no stalls
+        (3 / 3 probes). Sample sizes are small for Galaxy and the stall
+        appears time-correlated, so we cannot claim Galaxy is stall-free in
+        general — only that the OnePlus pool is presently degraded relative
+        to the Galaxy pool.
+      </p>
+      <p class="muted" style="font-size:14px;">
+        Symptoms: <code>session.status: "error"</code>, duration 36–65 s,
+        <code>stacktrace: "Instrumentation stalled"</code>, maestro log stops
+        at <code>Launch app … RUNNING</code>, device log 0 bytes.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============= CAP SECTION ============= -->
+<section class="alt" id="cap">
+  <div class="inner">
+    <div class="section-eyebrow">Finding 1 · platform-wide</div>
+    <h2>The cap fires at <code>tc.duration</code> ≈ 900 s — and it's not <code>idleTimeout</code></h2>
+    <p class="section-lede">
+      Two BrowserStack concepts are easy to confuse. <strong>This finding is about
+      the <em>observed</em> cap on Maestro test execution time</strong> — not about
+      the <code>idleTimeout</code> build-payload key. We tested both with and
+      without that key; the cap fired the same way in both cases. The
+      <code>idleTimeout</code> capability's actual semantics on Maestro v2
+      remain unverified by our experiments.
+    </p>
+
+    <h3 id="verify900">Direct answer to "is the cap 900 s?"</h3>
+    <div class="card" style="border-left: 4px solid var(--accent-deep);">
+      <p style="margin-top:0;">
+        The honest answer depends on which time field you mean.
+      </p>
+      <table style="margin: 8px 0;">
+        <thead>
+          <tr><th>Time field</th><th>Cap value (observed)</th><th>Boundary evidence</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>tc.duration</code><br><span style="font-size:12px;color:var(--ink-soft);">Maestro test execution time</span></td>
+            <td><strong>~900 s</strong><br><span style="font-size:12px;color:var(--ink-soft);">kill band 883–914 s</span></td>
+            <td>Last passing tc.dur seen: 873 s. Cap fires somewhere between 873 s and ~883 s. <strong>"~900 s of test execution" is fair.</strong></td>
+          </tr>
+          <tr>
+            <td><code>session.duration</code><br><span style="font-size:12px;color:var(--ink-soft);">tc.dur + BS pre/post overhead</span></td>
+            <td><strong>~940–975 s</strong></td>
+            <td>Last passing session.dur seen: 933 s (Galaxy 120-rep, build <code class="bid" data-copy="99235cebf5384a0e6cb227c533e708ea60457ee9">99235ceb…ee9</code>). First killed: 944 s. <strong>Not 900 s of session time.</strong></td>
+          </tr>
+          <tr>
+            <td><code>idleTimeout</code> build-payload key</td>
+            <td colspan="2"><span class="pill warn">does not control the cap</span> — see comparison table below</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="muted" style="margin-bottom:0;">
+        <strong>For planning:</strong> keep <code>tc.duration</code> ≤ ~870 s
+        per Maestro test, which keeps <code>session.duration</code> ≤ ~930 s
+        with typical ~60 s BS overhead. 100 reps × ~8.1 s/iter ≈ 812 s of
+        tc.duration — fits with ~58 s of headroom.
+      </p>
+    </div>
+
+    <h3>Evidence: idleTimeout=900 vs unset — kill behavior is identical</h3>
+    <p class="muted">All builds below ran the same Maestro flow shape; only the build-payload key differs.</p>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Build</th>
+              <th>idleTimeout</th>
+              <th>Reps</th>
+              <th class="num">tc.dur</th>
+              <th class="num">session.dur</th>
+              <th class="num">Overhead</th>
+              <th>Outcome</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code class="bid" data-copy="67ee914a878eb77ebdd018767d89c18e814f482f">67ee914a…82f</code></td><td><span class="pill muted">not set</span></td><td class="num">90</td><td class="num">656 s</td><td class="num">704 s</td><td class="num">48 s</td><td><span class="pill pass">passed</span></td></tr>
+            <tr><td><code class="bid" data-copy="d6b3adda8bdeee0e5538819e625792bfffbbef06">d6b3adda…f06</code></td><td><span class="pill muted">not set</span></td><td class="num">100</td><td class="num">738 s</td><td class="num">812 s</td><td class="num">74 s</td><td><span class="pill pass">passed</span></td></tr>
+            <tr><td><code class="bid" data-copy="0c714895150f32bb9f49af54246887128c616d9d">0c714895…d9d</code></td><td><strong>900</strong></td><td class="num">100</td><td class="num">779 s</td><td class="num">845 s</td><td class="num">66 s</td><td><span class="pill pass">passed</span></td></tr>
+            <tr><td><code class="bid" data-copy="99235cebf5384a0e6cb227c533e708ea60457ee9">99235ceb…ee9</code></td><td><span class="pill muted">not set</span></td><td class="num">120</td><td class="num"><strong>873 s</strong></td><td class="num"><strong>933 s</strong></td><td class="num">60 s</td><td><span class="pill pass">passed (closest)</span></td></tr>
+            <tr class="row-aggregate"><td colspan="7" style="background:#fef3c7;font-size:12px;letter-spacing:0.05em;text-transform:uppercase;color:#92400e;font-weight:600;">— cap-kill threshold —</td></tr>
+            <tr><td><code class="bid" data-copy="f3c2c50ae53c8030fdb113cdd8b3878eb5517d46">f3c2c50a…d46</code></td><td><span class="pill muted">not set</span></td><td class="num">148</td><td class="num">~883 s*</td><td class="num">943 s</td><td class="num">~60 s</td><td><span class="pill fail">killed (108 / 148)</span></td></tr>
+            <tr><td><code class="bid" data-copy="81fd9404bbb956397d39e6f5b2277ff7135cd321">81fd9404…321</code></td><td><span class="pill muted">not set</span></td><td class="num">150</td><td class="num">~884 s*</td><td class="num">944 s</td><td class="num">~60 s</td><td><span class="pill fail">killed (124 / 150)</span></td></tr>
+            <tr><td><code class="bid" data-copy="1687bb73f49b012d4df935bc0e6fbf65d83832e5">1687bb73…832e5</code></td><td><strong>900</strong></td><td class="num">132</td><td class="num">~889 s*</td><td class="num">949 s</td><td class="num">~60 s</td><td><span class="pill fail">killed (111 / 132)</span></td></tr>
+            <tr><td><code class="bid" data-copy="3d79ca031c8108615e6d1f43852eb6d052e4a545">3d79ca03…545</code></td><td><span class="pill muted">not set</span><br><span style="font-size:11px;color:var(--ink-muted);">sessionTimeout:1800 dropped</span></td><td class="num">148</td><td class="num">~914 s*</td><td class="num">974 s</td><td class="num">~60 s</td><td><span class="pill fail">killed (125 / 148)</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="muted" style="margin-top:12px;">
+        <strong>*</strong> tc.duration is <code>0</code> in BS metadata for killed
+        sessions (process killed before terminal state was written); the values
+        shown are estimated as <code>session.duration − typical 60 s BS overhead</code>.
+        Actual log evidence: maestro log timestamps confirm continuous activity
+        up to the kill point; the kill happens mid-iteration.
+      </p>
+      <p style="margin-top:12px;">
+        <strong>Comparison shows the cap is independent of <code>idleTimeout</code>:</strong>
+        <code class="bid" data-copy="0c714895150f32bb9f49af54246887128c616d9d">0c714895…d9d</code>
+        (idleTimeout=900) and
+        <code class="bid" data-copy="d6b3adda8bdeee0e5538819e625792bfffbbef06">d6b3adda…f06</code>
+        (idleTimeout unset) both pass at similar low durations.
+        <code class="bid" data-copy="1687bb73f49b012d4df935bc0e6fbf65d83832e5">1687bb73…832e5</code>
+        (idleTimeout=900) and
+        <code class="bid" data-copy="f3c2c50ae53c8030fdb113cdd8b3878eb5517d46">f3c2c50a…d46</code>
+        (idleTimeout unset) both get killed at essentially the same tc.duration
+        (~883–889 s). Whatever mechanism enforces the cap, it is not the
+        <code>idleTimeout</code> capability value we send.
+      </p>
+    </div>
+
+    <h3>What a cap-kill looks like on the API</h3>
+    <p class="muted">From build <code class="bid" data-copy="81fd9404bbb956397d39e6f5b2277ff7135cd321">81fd9404bbb956397d39e6f5b2277ff7135cd321</code> (Galaxy S25, 150-rep):</p>
+    <pre class="log"><span class="key">session.status</span>:       <span class="fail">"failed"</span>
+<span class="key">session.duration</span>:     <span class="value">944</span>  <span class="dim">// killed mid-loop</span>
+<span class="key">session.error</span>:        <span class="dim">null</span>
+<span class="key">tc.status</span>:            <span class="fail">"failed"</span>
+<span class="key">tc.duration</span>:          <span class="value">0</span>  <span class="dim">// process killed before terminal state written</span>
+<span class="key">tc.metadata</span>:
+  <span class="key">completed_flows</span>:    <span class="value">0</span>
+  <span class="key">total_flows</span>:        <span class="value">0</span>
+  <span class="key">maestro_status</span>:     <span class="fail">"UNKNOWN"</span>
+  <span class="key">stacktrace</span>:         <span class="value">""</span></pre>
+
+    <h3>What we have NOT tested — be aware of these gaps</h3>
+    <div class="card" style="border-left: 4px solid var(--warn);">
+      <ul style="margin: 0; padding-left: 20px; color: var(--ink);">
+        <li style="margin-bottom: 10px;">
+          <strong>Whether <code>idleTimeout</code> does what its name suggests
+          on Maestro v2.</strong> BS docs describe <code>idleTimeout</code> as
+          "maximum time between consecutive commands" for Espresso/XCUITest.
+          All our flows had &lt;1 s between commands, so the no-activity timer
+          (if any) never fired. We cannot say whether a flow with intentional
+          multi-second idle periods would behave differently. To test: run a
+          flow with <code>extendedWaitUntil</code> or a <code>delay</code> of
+          120+ s, with <code>idleTimeout: 60</code>.
+        </li>
+        <li style="margin-bottom: 10px;">
+          <strong>Whether the <code>tc.duration</code> ≈ 900 s cap is the
+          documented <code>idleTimeout</code> mechanism enforced as
+          wall-time, or a separate platform-level execution-time cap, or
+          something else.</strong> Our data shows behavior, not the underlying
+          mechanism. The mechanism's identity matters because it determines
+          whether any future BS payload key could lift it.
+        </li>
+        <li style="margin-bottom: 10px;">
+          <strong>Whether splitting a flow into multiple <code>.yaml</code>
+          files inside the test_suite zip gives each file its own
+          ~900-s budget.</strong> Plausible based on how BS reports tests, but
+          not confirmed. Need to run a test_suite with two .yaml files of
+          ~500-s each and observe whether the second one is allowed to start
+          and complete.
+        </li>
+        <li>
+          <strong>Whether the cap applies identically on iOS Maestro v2.</strong>
+          We have not run the same probe set on the iOS pipeline.
+        </li>
+      </ul>
+    </div>
+    <p class="muted">No error message anywhere. The only way to know how far it actually got is to grep the maestro log:</p>
+    <pre class="log">$ grep -c <span class="value">"Software company based in India.*COMPLETED"</span> maestro.log
+<span class="pass">124</span>      <span class="dim"># 124 of 150 iterations had completed before the kill</span></pre>
+
+    <h3>Maestro log tail (mid-iteration cutoff, no error)</h3>
+    <pre class="log">11:14:55.213 [INFO] Erase text RUNNING
+11:14:55.213 [INFO] Erasing 50 characters
+11:14:59.474 [INFO] Erase text COMPLETED
+11:14:59.474 [INFO] Input text BrowserStack RUNNING
+11:14:59.474 [INFO] Inputting text: BrowserStack
+<span class="dim">&lt;log ends here · no exception · no warning · no &quot;Test failed&quot; · session marked &quot;failed&quot; ~5 s later&gt;</span></pre>
+
+    <h3>Mitigation</h3>
+    <div class="card">
+      <p>
+        Keep a single Maestro <code>.yaml</code> test under
+        <code>tc.duration</code> ≈ 870 s of expected execution time (≈ 930 s
+        of <code>session.duration</code> with typical BS overhead). No
+        build-payload parameter we've tested lifts the cap; <code>idleTimeout</code>
+        and <code>sessionTimeout</code> do not. If the workload genuinely
+        requires more, the only confirmed path is to contact BS support and
+        request a higher cap for this account. Flow-splitting into multiple
+        <code>.yaml</code> files inside the test_suite zip is plausible but
+        <strong>unverified</strong> — it should be tested before relied on.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============= STALL SECTION ============= -->
+<section id="stall">
+  <div class="section-eyebrow">Finding 2 · device-pool-specific</div>
+  <h2>OnePlus 12R-14.0 cold-launch instrumentation stalls</h2>
+  <p class="section-lede">
+    On 2026-05-11, the <code>OnePlus 12R-14.0</code> ap-south pool exhibited a
+    high rate of cold-<code>launchApp</code> stalls for our Wikipedia Alpha APK.
+    The session never gets past the very first Maestro command. This is a
+    device-pool health issue — Samsung Galaxy S25-15.0 had a 0 % stall rate
+    across all probes in the same time window with the same script.
+  </p>
+
+  <h3>Today's evidence: same script, same APK, same time window — different outcomes</h3>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Device pool</th>
+            <th>Probe</th>
+            <th>Physical hostname</th>
+            <th class="num">Duration</th>
+            <th>Outcome</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>OnePlus 12R-14.0</td><td>100 reps × 100 sessions</td><td>(mixed pool)</td><td class="num">~47 % stalled</td><td><span class="pill fail">degraded</span></td></tr>
+          <tr><td>OnePlus 12R-14.0</td><td>162-rep smoke</td><td><code>b33588eb</code></td><td class="num">45 s</td><td><span class="pill fail">stall</span></td></tr>
+          <tr><td>OnePlus 12R-14.0</td><td>90-rep smoke</td><td><code>b33588eb</code></td><td class="num">49 s</td><td><span class="pill fail">stall</span></td></tr>
+          <tr><td>OnePlus 12R-14.0</td><td>90-rep retry</td><td><code>5cbb0293</code></td><td class="num">36 s</td><td><span class="pill fail">stall</span></td></tr>
+          <tr><td>OnePlus 12R-14.0</td><td>120-rep smoke</td><td><code>56c5aa31</code></td><td class="num">55 s</td><td><span class="pill fail">stall</span></td></tr>
+          <tr style="background:#fafbff;"><td>Samsung Galaxy S25-15.0</td><td>90-rep smoke</td><td><code>RZCY82GQ12L</code></td><td class="num">704 s</td><td><span class="pill pass">passed (90 / 90)</span></td></tr>
+          <tr style="background:#fafbff;"><td>Samsung Galaxy S25-15.0</td><td>120-rep smoke</td><td><code>RZCY82GQ12L</code></td><td class="num">933 s</td><td><span class="pill pass">passed (120 / 120)</span></td></tr>
+          <tr style="background:#fafbff;"><td>Samsung Galaxy S25-15.0</td><td>150-rep smoke</td><td><code>RZCY922328H</code></td><td class="num">944 s</td><td><span class="pill warn">cap-killed (124 / 150) — different failure mode (#1)</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <h3>What the OnePlus stall looks like on the API</h3>
+  <pre class="log"><span class="key">session.status</span>:       <span class="fail">"error"</span>  <span class="dim">// not "failed" — different from #1</span>
+<span class="key">session.duration</span>:     <span class="value">42–65</span>  <span class="dim">// stalls very early</span>
+<span class="key">session.error</span>:        <span class="dim">null</span>
+<span class="key">tc.metadata</span>:
+  <span class="key">stacktrace</span>:         <span class="fail">"Instrumentation stalled"</span>
+  <span class="key">maestro_status</span>:     <span class="fail">"UNKNOWN"</span>
+  <span class="key">completed_flows</span>:    <span class="value">0</span>
+  <span class="key">total_flows</span>:        <span class="value">0</span>
+<span class="dim">device log</span>:           <span class="value">0 bytes</span>  <span class="dim">// device-side logcat never even started</span></pre>
+
+  <h3>Maestro log tail (stalls before launchApp completes)</h3>
+  <pre class="log">10:06:00.502 [INFO] Got device info: DeviceInfo(platform=ANDROID, …)
+10:06:00.622 [INFO] Apply configuration COMPLETED
+10:06:00.623 [INFO] Launch app <span class="value">"org.wikipedia.alpha"</span> RUNNING
+10:06:01.815 [INFO] Launching app org.wikipedia.alpha
+<span class="dim">&lt;no COMPLETED · BS watchdog kills the session ~40 s later&gt;</span></pre>
+
+  <h3>Why this is pool health, not a flow bug</h3>
+  <ul>
+    <li>Same script + APK + flow YAML + time window passes on Galaxy S25.</li>
+    <li>The session never executes a single Maestro command past <code>launchApp RUNNING</code>.</li>
+    <li>The device log is 0 bytes — Maestro never got far enough to start logcat collection.</li>
+    <li>Initial hostname-deterministic hypothesis was wrong: <code>5cbb0293</code> ran 108 iterations earlier on the same day, then stalled at launch later. Stall risk appears to be time-correlated, not host-deterministic.</li>
+  </ul>
+</section>
+
+<!-- ============= SIDE BY SIDE ============= -->
+<section class="alt" id="sidebyside">
+  <div class="inner">
+    <div class="section-eyebrow">Same conditions, different platforms</div>
+    <h2>OnePlus 12R-14.0 vs Galaxy S25-15.0 — 90 and 120 reps, same code path</h2>
+    <p class="section-lede">
+      Identical Maestro flow YAML, identical Wikipedia Alpha APK, sessions
+      triggered within minutes of each other on 2026-05-11. The only variable is
+      the BS device specifier.
+    </p>
+
+    <div class="sidebyside">
+      <div>
+        <div class="device">
+          <code>OnePlus 12R-14.0</code>
+          <span class="badge bad">degraded</span>
+        </div>
+        <h4>5 of 5 probes stalled at cold launchApp</h4>
+        <ul>
+          <li>Hostnames seen: <code>b33588eb</code>, <code>5cbb0293</code>, <code>56c5aa31</code>, <code>d19684da</code></li>
+          <li>All probes died at 36–65 s session duration</li>
+          <li>Zero iterations executed across all 5 probes</li>
+          <li>Same fingerprint each time: <code>error</code> + <code>"Instrumentation stalled"</code> + empty device log</li>
+          <li>~47 % stall rate in a 100-session run earlier</li>
+        </ul>
+      </div>
+      <div>
+        <div class="device">
+          <code>Samsung Galaxy S25-15.0</code>
+          <span class="badge good">healthy</span>
+        </div>
+        <h4>3 of 3 probes ran clean to completion (or to the cap)</h4>
+        <ul>
+          <li>Hostnames: <code>RZCY82GQ12L</code>, <code>RZCY922328H</code></li>
+          <li>90-rep: 704 s, 90/90 iterations <span class="pill pass">passed</span></li>
+          <li>120-rep: 933 s, 120/120 iterations <span class="pill pass">passed</span></li>
+          <li>150-rep: 944 s, 124/150 iterations <span class="pill warn">cap-killed</span> — hit finding #1, not a stall</li>
+          <li>Per-iter timing stable at ~7.78 s across both passing runs</li>
+        </ul>
+      </div>
+    </div>
+
+    <p style="margin-top: 24px;">
+      <strong>Implication for benchmarking on this account today:</strong>
+      results on <code>OnePlus 12R-14.0</code> are confounded by ~25–47 %
+      pool-stall noise that is not present on the Galaxy pool. Wall-time
+      measurements from OnePlus 12R-14.0 today are valid only for the sessions
+      that survive cold-launch — the rest reflect BS infrastructure, not the
+      framework.
+    </p>
+  </div>
+</section>
+
+<!-- ============= EVIDENCE BUILDS ============= -->
+<section id="evidence">
+  <div class="section-eyebrow">Receipts</div>
+  <h2>Every build that fed these findings</h2>
+  <p class="section-lede">
+    All build IDs are queryable on the BrowserStack App Automate dashboard
+    (<code>app-automate.browserstack.com/dashboard/v2/builds/&lt;build_id&gt;</code>).
+    Each row's "fingerprint" column tells you which finding the build supports.
+    <strong>Click any build ID to copy the full hash to your clipboard.</strong>
+  </p>
+
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Build ID</th>
+            <th>Reps</th>
+            <th>Device</th>
+            <th class="num">session.dur</th>
+            <th>Outcome</th>
+            <th>Fingerprint</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><code class="bid" data-copy="d6b3adda8bdeee0e5538819e625792bfffbbef06">d6b3adda…f06</code></td><td class="num">100</td><td>OnePlus 12R-14.0</td><td class="num">812</td><td><span class="pill pass">passed</span></td><td>baseline — under cap, on a healthy unit</td></tr>
+          <tr><td><code class="bid" data-copy="0c714895150f32bb9f49af54246887128c616d9d">0c714895…d9d</code></td><td class="num">100</td><td>OnePlus 12R-14.0</td><td class="num">845</td><td><span class="pill pass">passed</span></td><td>prior validation, under cap</td></tr>
+          <tr><td><code class="bid" data-copy="99235cebf5384a0e6cb227c533e708ea60457ee9">99235ceb…ee9</code></td><td class="num">120</td><td>Galaxy S25-15.0</td><td class="num">933</td><td><span class="pill pass">passed</span></td><td>closest-passing observation (~7s under cap)</td></tr>
+          <tr><td><code class="bid" data-copy="67ee914a878eb77ebdd018767d89c18e814f482f">67ee914a…82f</code></td><td class="num">90</td><td>Galaxy S25-15.0</td><td class="num">704</td><td><span class="pill pass">passed</span></td><td>Galaxy probe — no stall vs OnePlus</td></tr>
+          <tr><td><code class="bid" data-copy="81fd9404bbb956397d39e6f5b2277ff7135cd321">81fd9404…321</code></td><td class="num">150</td><td>Galaxy S25-15.0</td><td class="num"><strong>944</strong></td><td><span class="pill fail">cap-killed</span></td><td>device-agnostic cap proven (#1)</td></tr>
+          <tr><td><code class="bid" data-copy="f3c2c50ae53c8030fdb113cdd8b3878eb5517d46">f3c2c50a…d46</code></td><td class="num">148</td><td>OnePlus 12R-14.0</td><td class="num">943</td><td><span class="pill fail">cap-killed</span></td><td>cap kill, 108/148 reps</td></tr>
+          <tr><td><code class="bid" data-copy="3d79ca031c8108615e6d1f43852eb6d052e4a545">3d79ca03…545</code></td><td class="num">148</td><td>OnePlus 12R-14.0</td><td class="num">974</td><td><span class="pill fail">cap-killed</span></td><td>cap kill, 125/148 reps; <code>sessionTimeout: 1800</code> silently dropped</td></tr>
+          <tr><td><code class="bid" data-copy="1687bb73f49b012d4df935bc0e6fbf65d83832e5">1687bb73…832e5</code></td><td class="num">132</td><td>OnePlus 12R-14.0</td><td class="num">949</td><td><span class="pill fail">cap-killed</span></td><td>cap kill with <strong><code>idleTimeout: 900</code> explicitly set</strong> — proves cap is independent of that key</td></tr>
+          <tr><td><code class="bid" data-copy="1d0aabce88f052ef6949dcb863ae91d34eee9054">1d0aabce…054</code></td><td class="num">120</td><td>OnePlus 12R-14.0</td><td class="num">55</td><td><span class="pill warn">stall</span></td><td>OnePlus pool stall (#2)</td></tr>
+          <tr><td><code class="bid" data-copy="25879773a971d2bc47eee0b2c37905610d6432cc">25879773…2cc</code></td><td class="num">90</td><td>OnePlus 12R-14.0</td><td class="num">36</td><td><span class="pill warn">stall</span></td><td>OnePlus pool stall (#2)</td></tr>
+          <tr><td><code class="bid" data-copy="d1440dacc873396e92f5a86808229fbe6b696741">d1440dac…741</code></td><td class="num">100 × 100</td><td>OnePlus 12R-14.0</td><td class="num">—</td><td><span class="pill warn">~47% stalled</span></td><td>fleet-scale view of stall rate</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============= FINGERPRINTS ============= -->
+<section class="alt" id="fingerprints">
+  <div class="inner">
+    <div class="section-eyebrow">Triage guide</div>
+    <h2>How to tell finding #1 from finding #2 in 5 seconds</h2>
+    <p class="section-lede">
+      Both produce empty stacktraces and <code>maestro_status: "UNKNOWN"</code>.
+      The split happens at the <code>status</code> and <code>session.duration</code>
+      fields.
+    </p>
+
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Field</th>
+              <th>Cap-kill (#1)</th>
+              <th>OnePlus stall (#2)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>session.status</code></td><td><span class="pill fail">failed</span></td><td><span class="pill warn">error</span></td></tr>
+            <tr><td><code>session.duration</code> at kill</td><td>~940–975 s</td><td>36–65 s</td></tr>
+            <tr><td>Implied <code>tc.duration</code> at kill</td><td>~880–915 s</td><td>~0 s (never started executing)</td></tr>
+            <tr><td><code>tc.metadata.stacktrace</code></td><td><code>""</code> (empty)</td><td><code>"Instrumentation stalled"</code></td></tr>
+            <tr><td><code>tc.metadata.maestro_status</code></td><td><code>"UNKNOWN"</code></td><td><code>"UNKNOWN"</code></td></tr>
+            <tr><td><code>tc.metadata.completed_flows</code></td><td><code>0 / 0</code></td><td><code>0 / 0</code></td></tr>
+            <tr><td>Iterations completed (grep maestro log)</td><td>dozens to ~125</td><td>0</td></tr>
+            <tr><td>Maestro log last line</td><td>mid-iteration in the loop body</td><td>at or before <code>Launch app … RUNNING</code></td></tr>
+            <tr><td>Device log size</td><td>populated (tens to hundreds of KB)</td><td>0 bytes</td></tr>
+            <tr><td>Mitigation</td><td>keep <code>tc.duration</code> ≤ ~870 s; flow-splitting plausible but untested</td><td>retry the session (BS reassigns) or accept lost samples</td></tr>
+            <tr><td>Scope</td><td>BS Maestro v2, observed on both pools tested (Android only)</td><td>OnePlus 12R-14.0 ap-south pool, 2026-05-11 (small sample)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============= RECOMMENDATIONS ============= -->
+<section id="recs">
+  <div class="section-eyebrow">What to do</div>
+  <h2>Recommendations</h2>
+  <p class="section-lede">
+    The benchmark requirement is 100 reps of identical work. Both findings are
+    survivable for that target with the right operational posture.
+  </p>
+
+  <div class="grid cols-2">
+    <div class="reco">
+      <span class="reco-impact high">High impact</span>
+      <h4>1. Cap your single Maestro test at <code>tc.duration</code> ≤ ~870 s.</h4>
+      <p class="muted">
+        100 reps × ~8.1 s/iter ≈ 738–873 s of <code>tc.duration</code> across
+        the device pools we tested — fits with margin. If a future workload
+        requires more, the only safe path until BS confirms otherwise is to
+        request a higher cap from BS support; the
+        "split into multiple <code>.yaml</code> files" trick is plausible but
+        untested.
+      </p>
+    </div>
+
+    <div class="reco">
+      <span class="reco-impact high">High impact</span>
+      <h4>2. Add session-level retry to <code>cloud_run_android.sh</code>.</h4>
+      <p class="muted">
+        For OnePlus 12R-14.0 (or any pool with stall noise), after a build
+        terminates, identify <code>error</code>-status sessions with duration
+        &lt; 90 s and re-fire them as a fresh build. Repeat until N clean
+        passes. This treats pool heterogeneity as a known noise source
+        without changing device or flow.
+      </p>
+    </div>
+
+    <div class="reco">
+      <span class="reco-impact med">Med impact</span>
+      <h4>3. Footnote OnePlus 12R-14.0 results in the final report.</h4>
+      <p class="muted">
+        State the observed pool-stall rate as a measurement caveat —
+        OnePlus 12R-14.0 numbers reflect BS pool health on
+        <code>2026-05-11</code>, not just framework behavior. Galaxy S25-15.0
+        numbers don't need this footnote.
+      </p>
+    </div>
+
+    <div class="reco">
+      <span class="reco-impact med">Med impact</span>
+      <h4>4. File a BS support ticket with the hostnames.</h4>
+      <p class="muted">
+        Provide <code>b33588eb</code>, <code>5cbb0293</code>, <code>56c5aa31</code>,
+        <code>d19684da</code> and the <code>Instrumentation stalled</code>
+        evidence. Long lead time, but the right durable fix for the
+        OnePlus 12R-14.0 pool.
+      </p>
+    </div>
+
+    <div class="reco">
+      <span class="reco-impact low">Low impact</span>
+      <h4>5. Skip unknown BS payload keys — verify them via <code>input_capabilities</code>.</h4>
+      <p class="muted">
+        BS silently drops unrecognized build-payload keys
+        (<code>sessionTimeout</code> proven). Inspect
+        <code>GET /maestro/v2/builds/&lt;id&gt;</code>'s
+        <code>input_capabilities</code> after triggering a build — if a key you
+        passed isn't there, it wasn't honored. Trust this over BS docs.
+      </p>
+    </div>
+
+    <div class="reco">
+      <span class="reco-impact low">Low impact</span>
+      <h4>6. Don't try to stop running Maestro v2 builds via API.</h4>
+      <p class="muted">
+        All <code>DELETE</code>/<code>POST</code>/<code>PUT</code>/<code>PATCH</code>
+        variants return 422 or 404. Use the BS App Automate web dashboard
+        instead — that works, verified today.
+      </p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Field report compiled from 11 BrowserStack App Automate Maestro v2 builds against the cloud Android benchmark pipeline (ap-south, 2026-05-11). Source data and the running gotchas log live at <code>docs/runbooks/cloud-maestro-gotchas.md</code>. Click any build ID in this report to copy the full 40-character hash.</p>
+  <p style="opacity:0.7; margin-top:8px;">Findings 1 and 2 are both empirical observations from these builds. Anything labeled "untested" or "unverified" is exactly that — we did not measure it and the report does not claim it.</p>
+</footer>
+
+<script>
+  // Click-to-copy on every build-id reference.
+  document.addEventListener("click", function (e) {
+    const el = e.target.closest("code.bid");
+    if (!el) return;
+    const text = el.dataset.copy || el.textContent;
+    // Modern clipboard API with graceful fallback.
+    const onCopied = () => {
+      el.classList.add("copied");
+      setTimeout(() => el.classList.remove("copied"), 1200);
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(onCopied, () => fallback());
+    } else {
+      fallback();
+    }
+    function fallback() {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); onCopied(); } finally { ta.remove(); }
+    }
+  });
+</script>
+
+</body>
+</html>
