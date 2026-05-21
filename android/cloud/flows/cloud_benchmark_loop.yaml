@@ -1,0 +1,28 @@
+appId: org.wikipedia.alpha
+tags:
+  - benchmark
+  - real-user-sim
+---
+# Cloud Maestro Android benchmark flow (selector-based).
+# Workload: 100 reps of search-and-assert, identical to the local Android
+# benchmark. Wall-time on cloud (~812 s on OnePlus 12R-14.0) is expected to
+# differ from local (~1198 s on OnePlus 9R) — that wall-time delta IS the
+# benchmark signal, not a calibration miss.
+#
+# Same shape as android/local/flows/benchmark_loop.yaml so cloud per-step
+# timings line up with local reports step-for-step.
+#
+# Validated on OnePlus 12R-14.0 via 100-rep smoke build
+# d6b3adda8bdeee0e5538819e625792bfffbbef06 (passed, session_total=812 s).
+- launchApp
+- tapOn:
+    text: "OK"
+    optional: true
+- tapOn:
+    id: "org.wikipedia.alpha:id/search_container"
+- repeat:
+    times: 100
+    commands:
+      - eraseText
+      - inputText: "BrowserStack"
+      - assertVisible: "Software company based in India"

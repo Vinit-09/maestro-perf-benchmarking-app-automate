@@ -1,0 +1,23 @@
+{
+  "_comment": "Synthetic BS Maestro v2 build JSON for cloud_android dual-yaml workload. Matches the bq fixture (3 sessions, all passed, build_id bid01).",
+  "id": "bid01",
+  "framework": "maestro",
+  "duration": 1150,
+  "status": "passed",
+  "input_capabilities": {
+    "devices": ["Samsung Galaxy S24-14.0"],
+    "execute": ["test_a.yaml", "test_b.yaml"],
+    "buildTag": "multitest-fixture"
+  },
+  "devices": [
+    {
+      "device": "Samsung Galaxy S24",
+      "os_version": "14.0",
+      "sessions": [
+        {"id": "sa01", "status": "passed", "duration": 1100},
+        {"id": "sa02", "status": "passed", "duration": 1150},
+        {"id": "sa03", "status": "passed", "duration": 1200}
+      ]
+    }
+  ]
+}

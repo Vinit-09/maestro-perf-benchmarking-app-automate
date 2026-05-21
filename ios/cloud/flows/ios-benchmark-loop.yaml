@@ -1,0 +1,18 @@
+appId: com.vinitg.HelloBench
+tags:
+  - benchmark
+  - real-user-sim
+---
+# iOS cloud Maestro benchmark — same flow shape as local. Sized per run:
+#   - 2 reps for smoke (verifies BS upload/trigger/poll pipeline end-to-end)
+#   - 115 reps for the real benchmark (mirrors local's ~733 s P90 target)
+- launchApp
+- tapOn:
+    id: "searchField"
+- repeat:
+    times: 115
+    commands:
+      - eraseText
+      - inputText: "Browser"
+      - assertVisible:
+          id: "item_BrowserStack"

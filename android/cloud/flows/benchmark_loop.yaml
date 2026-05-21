@@ -4,16 +4,18 @@ tags:
 ---
 # Sized to ~1198 s execution_ms (Maestro Android P90 target from
 # PROD-Framework Performance Benchmarking spec) on the OnePlus 9R / Android 14.
-# Pre-loop overhead ~9.2 s (launchApp + first tap on search_container).
-# Per-loop body steady-state ~14 s on this device (the 5-iter calibration
-# under-estimated at 9.5 s; the longer validation showed loops slow down to
-# ~14 s as the keyboard / view hierarchy gets exercised).
-# 85 iters * 14 + 9.2 ≈ 1199 s.
+# Recalibrated on 2026-05-06 against a hardened device (Play Protect off,
+# DND on, stay-awake on): per-rep steady-state ~10.25 s with pre-loop
+# overhead ~7 s. 117 reps * 10.25 + 7 ≈ 1206 s, leaving slight headroom
+# over the 1198 s P90 mark.
 - launchApp
+- tapOn:
+    text: "OK"
+    optional: true
 - tapOn:
     id: "org.wikipedia.alpha:id/search_container"
 - repeat:
-    times: 85
+    times: 117
     commands:
       - eraseText
       - inputText: "BrowserStack"

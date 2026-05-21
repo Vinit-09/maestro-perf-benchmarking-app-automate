@@ -1,0 +1,31 @@
+appId: org.wikipedia.alpha
+tags:
+  - calibration
+---
+# Cloud calibration flow (selector-free): 10 iters of swipe-only navigation,
+# mirroring SAMPLE_IOS_TEST/ios-benchmark-loop.yaml's pattern. Used to derive
+# per-iter timing for cloud_benchmark_loop.yaml on whichever Android device
+# BS allocates.
+#
+# History: the local benchmark_calibration.yaml uses an app-specific selector
+# (org.wikipedia.alpha:id/search_container) that fails on cloud devices
+# (verified 2026-05-05 via build 6868dd86b3381ba36df18b084a5c6baa544bdcfc —
+# tap-on-search_container failed after 17 s on first launch). Cloud flows
+# therefore use the iOS-style selector-free pattern, which is portable across
+# device classes and Android versions at the cost of differing in workload
+# character from the local-Android benchmark.
+- launchApp
+- repeat:
+    times: 10
+    commands:
+      - takeScreenshot: iter
+      - swipe:
+          direction: UP
+      - swipe:
+          direction: DOWN
+      - swipe:
+          direction: LEFT
+      - swipe:
+          direction: RIGHT
+      - launchApp:
+          stopApp: true

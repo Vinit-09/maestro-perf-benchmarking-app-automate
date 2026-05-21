@@ -1,5 +1,0 @@
-run_id,iter,tag,framework,os,device_model,device_os,flow,apk,device_readiness_ms,app_install_ms,maestro_total_ms,maestro_start_ms,execution_ms,stop_ms,session_total_ms,exit_code
-20260430_142823,1,smoke,maestro,android,LE2101,14,search_browserstack.yaml,WikipediaSample.apk,122,51253,28476,8575,14672,520,80371,0
-20260430_162200,1,calibration,maestro,android,LE2101,14,benchmark_calibration.yaml,WikipediaSample.apk,116,311658,68494,8285,56547,786,381054,0
-20260430_163752,1,loop_validation,maestro,android,LE2101,14,benchmark_loop.yaml,WikipediaSample.apk,128,9295,1248862,8382,937256,57,1258342,1
-20260430_175317,1,loop_validation,maestro,android,LE2101,14,benchmark_loop.yaml,WikipediaSample.apk,147,13772,1168475,6179,1157465,779,1183173,0

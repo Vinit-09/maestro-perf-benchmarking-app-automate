@@ -6,7 +6,8 @@
 .idea/
 
 # Cached cloud upload URLs (regenerated per run)
-results/_cloud_cache.env
+**/_cloud_cache.env
+results/_last_cloud_android_run.log
 
 # Large binaries — not tracked in git
 apps/*.apk
@@ -15,6 +16,29 @@ apps/*.ipa
 # Per-run artifacts (kept local, not tracked)
 results/2*/
 results/cloud_*/
+android/**/results/2*/
+android/**/results/cloud_*/
+android/**/results/*.aborted_*
+android/**/results/*.failed_*
+android/**/results/*.precal_*
+android/**/results/*.bak.*
+android/**/results/*.log.*
+android/**/results/*.log
+android/**/smoke_run/results/
+ios/**/results/2*/
+ios/**/results/cloud_*/
+ios/**/smoke_run/results/
+
+# Xcode build artifacts
+ios/**/build/
+ios/**/_xcodebuild_dd/
+ios/**/*.xcresult/
+*.pcm
+*.sdkstatcache
+
+# Xcode user-specific IDE state
+ios/**/xcuserdata/
+ios/**/*.xcuserstate
 
 # Python
 __pycache__/

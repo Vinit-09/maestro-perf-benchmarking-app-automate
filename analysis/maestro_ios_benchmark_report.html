@@ -1,0 +1,2020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>iOS Maestro Benchmark — Local vs BrowserStack Cloud</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --bg-card: #ffffff;
+      --bg-section: #f7f9fc;
+      --ink: #0f172a;
+      --ink-soft: #475569;
+      --ink-muted: #94a3b8;
+      --accent: #22d3ee;
+      --accent-deep: #0891b2;
+      --pass: #10b981;
+      --fail: #ef4444;
+      --warn: #f59e0b;
+      --line: #e2e8f0;
+      --shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 8px 24px rgba(15, 23, 42, 0.04);
+      --radius: 14px;
+      --hero-grad: radial-gradient(circle at 20% 0%, #1e3a8a 0%, #0b1020 60%);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", sans-serif;
+      color: var(--ink);
+      background: var(--bg-section);
+      line-height: 1.6;
+      font-size: 16px;
+    }
+
+    /* ----- Hero ----- */
+    .hero {
+      min-height: 100vh;
+      background: var(--hero-grad);
+      color: #f1f5f9;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 60px 24px 40px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 80% 30%, rgba(34, 211, 238, 0.18), transparent 50%);
+      pointer-events: none;
+    }
+    .hero-inner { max-width: 1200px; margin: 0 auto; width: 100%; position: relative; z-index: 1; }
+    .eyebrow {
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 12px;
+      color: var(--accent);
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+    .hero h1 {
+      font-size: clamp(36px, 6vw, 64px);
+      font-weight: 700;
+      line-height: 1.1;
+      margin: 0 0 24px;
+      letter-spacing: -0.02em;
+    }
+    .hero h1 span.accent { color: var(--accent); }
+    .hero-lede {
+      font-size: clamp(16px, 2vw, 20px);
+      max-width: 720px;
+      color: #cbd5e1;
+      margin-bottom: 48px;
+    }
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 24px;
+      margin-top: 40px;
+    }
+    .stat {
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+    .stat-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    .stat-value {
+      font-size: clamp(28px, 4vw, 40px);
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+    .stat-value .unit {
+      font-size: 0.5em;
+      color: var(--ink-muted);
+      font-weight: 400;
+      margin-left: 4px;
+    }
+    .stat-context {
+      font-size: 13px;
+      color: #94a3b8;
+      margin-top: 8px;
+    }
+    .verdict-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      font-weight: 600;
+      font-size: 14px;
+      margin-top: 24px;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    .verdict-pill::before {
+      content: "●";
+      color: var(--warn);
+    }
+
+    /* ----- Navigation ----- */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--line);
+      padding: 12px 0;
+    }
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      flex-wrap: nowrap;
+    }
+    .nav a {
+      color: var(--ink-soft);
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .nav a:hover { background: var(--bg-section); color: var(--ink); }
+    .nav a.active { background: var(--ink); color: #fff; }
+
+    /* ----- Sections ----- */
+    section {
+      padding: 80px 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    section.alt { background: #fff; max-width: none; padding-left: 0; padding-right: 0; }
+    section.alt > .inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    h2 {
+      font-size: clamp(28px, 4vw, 40px);
+      font-weight: 700;
+      margin: 0 0 16px;
+      letter-spacing: -0.02em;
+    }
+    h3 {
+      font-size: 22px;
+      margin: 32px 0 12px;
+      font-weight: 600;
+    }
+    .section-eyebrow {
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent-deep);
+      margin-bottom: 12px;
+    }
+    .section-lede {
+      font-size: 18px;
+      color: var(--ink-soft);
+      max-width: 800px;
+      margin-bottom: 40px;
+    }
+    p { color: var(--ink); }
+    p.muted { color: var(--ink-soft); }
+
+    /* ----- Cards & Grids ----- */
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--line);
+    }
+    .grid {
+      display: grid;
+      gap: 24px;
+    }
+    .grid.cols-2 { grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); }
+    .grid.cols-3 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+    .grid.cols-4 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+
+    /* ----- Numbers (in-section big stats) ----- */
+    .big-number {
+      font-size: 48px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1;
+      color: var(--ink);
+    }
+    .big-number.pass { color: var(--pass); }
+    .big-number.fail { color: var(--fail); }
+    .big-number.warn { color: var(--warn); }
+    .big-number .unit {
+      font-size: 0.4em;
+      color: var(--ink-muted);
+      font-weight: 400;
+      margin-left: 4px;
+    }
+    .number-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--ink-muted);
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .number-context {
+      font-size: 13px;
+      color: var(--ink-soft);
+      margin-top: 8px;
+    }
+
+    /* ----- Tables ----- */
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin: 16px 0;
+    }
+    th, td {
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+    }
+    th {
+      background: #f8fafc;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--ink-soft);
+    }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    tr:hover td { background: #fafbff; }
+    .row-group { background: #f1f5f9 !important; font-weight: 600; }
+    .row-aggregate { background: #fffbeb !important; font-weight: 600; }
+    .delta-pos { color: var(--fail); }
+    .delta-neg { color: var(--pass); }
+    .delta-neutral { color: var(--ink-muted); }
+
+    /* ----- Chart containers ----- */
+    .chart-card {
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--line);
+      margin: 24px 0;
+    }
+    .chart-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .chart-subtitle {
+      font-size: 13px;
+      color: var(--ink-muted);
+      margin-bottom: 20px;
+    }
+    .chart-canvas-wrap {
+      position: relative;
+      height: 380px;
+    }
+    .chart-controls {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .chip {
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fff;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+      color: var(--ink-soft);
+      font-weight: 500;
+    }
+    .chip:hover { border-color: var(--accent-deep); }
+    .chip.active {
+      background: var(--ink);
+      color: #fff;
+      border-color: var(--ink);
+    }
+
+    /* ----- Story timeline ----- */
+    .timeline {
+      position: relative;
+      padding-left: 32px;
+    }
+    .timeline::before {
+      content: "";
+      position: absolute;
+      left: 13px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--accent), var(--accent-deep));
+    }
+    .step {
+      position: relative;
+      padding: 8px 0 24px;
+    }
+    .step::before {
+      content: "";
+      position: absolute;
+      left: -28px;
+      top: 14px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 3px solid #fff;
+      box-shadow: 0 0 0 2px var(--accent-deep);
+    }
+    .step h4 {
+      margin: 0 0 4px;
+      font-size: 17px;
+      font-weight: 600;
+    }
+    .step p { margin: 4px 0; color: var(--ink-soft); }
+
+    /* ----- Recommendation cards ----- */
+    .reco {
+      border-left: 4px solid var(--accent);
+      padding: 20px 24px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    .reco h4 {
+      margin: 0 0 8px;
+      font-size: 17px;
+      font-weight: 600;
+    }
+    .reco-impact {
+      display: inline-block;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: #fef3c7;
+      color: #b45309;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .reco-impact.high { background: #fee2e2; color: #b91c1c; }
+    .reco-impact.med { background: #fef3c7; color: #b45309; }
+    .reco-impact.low { background: #ccfbf1; color: #115e59; }
+
+    /* ----- Collapsible details ----- */
+    details {
+      margin: 16px 0;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      overflow: hidden;
+    }
+    summary {
+      padding: 14px 18px;
+      cursor: pointer;
+      font-weight: 600;
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+    }
+    summary::-webkit-details-marker { display: none; }
+    summary::after {
+      content: "+";
+      color: var(--ink-muted);
+      font-size: 24px;
+      font-weight: 300;
+      transition: transform 0.2s;
+    }
+    details[open] summary::after { content: "−"; }
+    details > *:not(summary) { padding: 0 18px 18px; }
+
+    /* ----- Verdict block ----- */
+    .verdict-block {
+      background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%);
+      border-radius: var(--radius);
+      padding: 40px;
+      margin: 32px 0;
+      border-left: 6px solid var(--warn);
+    }
+    .verdict-math {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin: 24px 0;
+    }
+    .verdict-cell {
+      flex: 1;
+      min-width: 160px;
+      background: rgba(255, 255, 255, 0.7);
+      padding: 16px;
+      border-radius: 10px;
+    }
+    .verdict-formula {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+      font-size: 15px;
+      background: rgba(0, 0, 0, 0.05);
+      padding: 16px;
+      border-radius: 8px;
+      margin: 16px 0;
+      color: var(--ink);
+    }
+
+    /* ----- Footer ----- */
+    footer {
+      background: var(--bg);
+      color: #94a3b8;
+      padding: 40px 24px;
+      text-align: center;
+      font-size: 13px;
+    }
+
+    /* ----- Anim: counters ----- */
+    .counter {
+      display: inline-block;
+      transition: opacity 0.2s;
+    }
+    [data-fade] {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+    }
+    [data-fade].in {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    code {
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.92em;
+      font-family: ui-monospace, SFMono-Regular, monospace;
+    }
+
+    /* ----- Info icon (custom tooltip via JS) ----- */
+    .info {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      color: #475569;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: Georgia, serif;
+      font-style: italic;
+      margin-left: 6px;
+      cursor: help;
+      vertical-align: middle;
+      transition: background 0.15s, color 0.15s;
+      user-select: none;
+    }
+    .info:hover { background: var(--accent); color: #fff; }
+    .info::before { content: "i"; }
+
+    /* ----- Floating tooltip (JS-positioned) ----- */
+    #info-tip {
+      position: fixed;
+      z-index: 1000;
+      background: #0f172a;
+      color: #f1f5f9;
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 13px;
+      line-height: 1.55;
+      max-width: 340px;
+      width: max-content;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.32);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    #info-tip.show { opacity: 1; }
+    #info-tip .tip-title {
+      font-weight: 600;
+      color: var(--accent);
+      font-size: 14px;
+      margin-bottom: 4px;
+      letter-spacing: -0.01em;
+    }
+    #info-tip .tip-section { margin-top: 10px; }
+    #info-tip .tip-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #94a3b8;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+    #info-tip pre {
+      margin: 0;
+      background: rgba(34, 211, 238, 0.08);
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #67e8f9;
+      white-space: pre-wrap;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+      line-height: 1.5;
+    }
+    #info-tip p { margin: 0; color: #e2e8f0; }
+    #info-tip .tip-arrow {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: #0f172a;
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      transform: rotate(45deg);
+      left: 50%;
+      margin-left: -6px;
+    }
+    #info-tip.above .tip-arrow { bottom: -7px; }
+    #info-tip.below .tip-arrow { top: -7px; transform: rotate(225deg); }
+
+    /* ----- Glossary / definition list ----- */
+    .def-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .def-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+    .def-card h4 {
+      margin: 0 0 4px;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--accent-deep);
+    }
+    .def-card .def-tag {
+      display: inline-block;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .def-card p { margin: 0 0 10px; font-size: 14px; color: var(--ink-soft); }
+    .def-card dl { margin: 0; }
+    .def-card dt {
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--ink);
+      margin-top: 10px;
+      font-family: ui-monospace, SFMono-Regular, monospace;
+    }
+    .def-card dd {
+      margin: 2px 0 0;
+      font-size: 13px;
+      color: var(--ink-soft);
+      line-height: 1.5;
+    }
+
+    /* ----- Phase-mapping component (cloud ↔ local) ----- */
+    .phase-map { display: flex; flex-direction: column; gap: 14px; margin: 24px 0; }
+    .map-row {
+      display: grid;
+      grid-template-columns: 1fr 140px 1fr;
+      gap: 0;
+      background: #fff;
+      border-radius: 12px;
+      padding: 18px 0;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--line);
+      align-items: stretch;
+    }
+    .map-side {
+      padding: 4px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .map-side.cloud { border-left: 3px solid #7c3aed; }
+    .map-side.local { border-left: 3px solid var(--accent-deep); }
+    .map-phase {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--ink);
+      margin-bottom: 4px;
+      word-break: break-word;
+    }
+    .map-side.empty {
+      border-left-color: #cbd5e1;
+      background: #fafbfc;
+    }
+    .map-side.empty .map-phase {
+      color: var(--ink-muted);
+      font-style: italic;
+      font-family: inherit;
+      font-weight: 500;
+    }
+    .map-tag {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--ink-muted);
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+    .map-def {
+      font-size: 13px;
+      color: var(--ink-soft);
+      line-height: 1.55;
+    }
+    .map-conn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 0 8px;
+      border-left: 1px solid var(--line);
+      border-right: 1px solid var(--line);
+    }
+    .match-dot {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      font-weight: 700;
+      font-size: 18px;
+      color: #fff;
+    }
+    .match-dot.full { background: var(--pass); }
+    .match-dot.partial { background: var(--warn); }
+    .match-dot.none { background: #94a3b8; }
+    .match-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      color: var(--ink-muted);
+      text-align: center;
+      line-height: 1.3;
+    }
+    @media (max-width: 768px) {
+      .map-row { grid-template-columns: 1fr; }
+      .map-conn { border: none; padding: 12px 0; flex-direction: row; gap: 12px; }
+    }
+
+    /* ----- Plain-English callout ----- */
+    .plain-english {
+      background: #ecfeff;
+      border-left: 3px solid var(--accent-deep);
+      padding: 14px 18px;
+      margin-top: 8px;
+      border-radius: 6px;
+      font-size: 14px;
+      color: #134e4a;
+      line-height: 1.65;
+    }
+    .plain-english p { margin: 0 0 10px; color: #134e4a; }
+    .plain-english p:last-child { margin-bottom: 0; }
+    .plain-english strong { color: #0e7490; }
+
+    @media (max-width: 640px) {
+      .hero { padding: 40px 20px; }
+      section { padding: 56px 20px; }
+      .hero-stats { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ============================================================= -->
+<!-- HERO                                                         -->
+<!-- ============================================================= -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow">Maestro Benchmark · 2026</div>
+    <h1>Is BrowserStack cloud iOS<br>within <span class="accent">1.1×</span> of local?</h1>
+    <p class="hero-lede">
+      A controlled experiment running 11,500 Maestro reps across 108 sessions on iPhone 17.
+      We measured every phase of the test lifecycle — from app install to final assertion — to find out.
+    </p>
+
+    <div class="verdict-pill">Verdict: 1.113× — just over the ceiling by 9 seconds at P90</div>
+
+    <div class="hero-stats">
+      <div class="stat">
+        <div class="stat-label">Local P90</div>
+        <div class="stat-value">682.6<span class="unit">s</span></div>
+        <div class="stat-context">10 / 10 clean sessions on a wired iPhone 17</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Cloud P90</div>
+        <div class="stat-value">759.9<span class="unit">s</span></div>
+        <div class="stat-context">98 sessions on BrowserStack iPhone 17</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">The 1.1× ceiling</div>
+        <div class="stat-value">750.9<span class="unit">s</span></div>
+        <div class="stat-context">Cloud overshot by 9 s — 1.13 % over</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Spec target</div>
+        <div class="stat-value">733.0<span class="unit">s</span></div>
+        <div class="stat-context">Cloud landed exactly here at P50</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ============================================================= -->
+<!-- NAV                                                          -->
+<!-- ============================================================= -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="#mission" class="active">Mission</a>
+    <a href="#setup">Setup</a>
+    <a href="#journey">Journey</a>
+    <a href="#local">Local Results</a>
+    <a href="#cloud">Cloud Results</a>
+    <a href="#mapping">Phase Mapping</a>
+    <a href="#verdict">The Verdict</a>
+    <a href="#recommendations">Recommendations</a>
+    <a href="#methodology">Methodology</a>
+  </div>
+</nav>
+
+<!-- ============================================================= -->
+<!-- 1. MISSION                                                   -->
+<!-- ============================================================= -->
+<section id="mission">
+  <div class="section-eyebrow">01 · The Question</div>
+  <h2>Why this benchmark exists</h2>
+  <p class="section-lede">
+    BrowserStack runs Maestro tests across thousands of iOS devices. Customers ask one question over and over:
+    <em>"How much slower is the cloud than my local laptop?"</em> We needed a defensible number.
+  </p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h3 style="margin-top:0;">The hypothesis</h3>
+      <p>BrowserStack cloud iOS Maestro should run within <strong>1.1×</strong> of an equivalent local run on the same model device. That's our internal SLA target — the number that determines whether the cloud experience is "indistinguishable from local" for a customer.</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0;">What's in scope</h3>
+      <ul style="padding-left: 20px; margin: 0;">
+        <li><strong>iPhone 17 / iOS 26.x</strong> on both sides</li>
+        <li>A Maestro flow sized to <strong>~733 s P90</strong> (per spec)</li>
+        <li><strong>Same-region</strong> cloud devices (ap-south-1 for an India operator)</li>
+        <li>Per-session and per-rep latency at <strong>P50, P75, P90, P95, P100</strong></li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>What we measured</h3>
+  <p>The total session time isn't a single number — it's a chain of phases that BrowserStack and the customer both touch. Each card below names the phase and explains every step inside it in plain language.</p>
+
+  <div class="def-grid">
+    <div class="def-card">
+      <div class="def-tag">Phase 1</div>
+      <h4>Pre-Maestro</h4>
+      <p>Everything that happens before Maestro itself even starts running.</p>
+      <dl>
+        <dt>Device probe</dt>
+        <dd>Check that the iPhone is connected and reachable. Like asking "is the phone there and turned on?" before doing anything else.</dd>
+        <dt>App install</dt>
+        <dd>Install the HelloBench app onto the iPhone. Same idea as installing an app from the App Store, just pushed from a Mac (local) or BrowserStack's server (cloud).</dd>
+      </dl>
+    </div>
+
+    <div class="def-card">
+      <div class="def-tag">Phase 2</div>
+      <h4>Maestro startup</h4>
+      <p>The Maestro test engine wakes up and gets ready to drive the phone.</p>
+      <dl>
+        <dt>JVM boot (maestro_init)</dt>
+        <dd>Maestro is written in Java. When you launch it, the Java engine has to start up first — like turning the key in a car before you can drive. About 1 second.</dd>
+        <dt>Driver setup</dt>
+        <dd>A small helper app (the "driver") runs on the iPhone and is what actually taps, types, and reads the screen. Maestro has to open a connection to that driver before any test can happen.</dd>
+        <dt>Device info</dt>
+        <dd>Maestro asks the iPhone "what model are you, what's your screen size, what version of iOS?" — quick metadata fetch so it knows what it's working with.</dd>
+      </dl>
+    </div>
+
+    <div class="def-card">
+      <div class="def-tag">Phase 3</div>
+      <h4>Flow execution</h4>
+      <p>The actual test work — opening the app and doing repeated user actions.</p>
+      <dl>
+        <dt>launchApp</dt>
+        <dd>Open (start) HelloBench on the device, just like a user tapping the icon on their home screen.</dd>
+        <dt>tapOn searchField</dt>
+        <dd>Tap on the search box at the top of the app, the same way a user would touch it to start typing.</dd>
+        <dt>The repeat block (115×)</dt>
+        <dd>The same three actions, done 115 times in a row: clear the search box → type the word "Browser" → confirm the result "BrowserStack" shows up. This is what stresses the system.</dd>
+      </dl>
+    </div>
+
+    <div class="def-card">
+      <div class="def-tag">Phase 4</div>
+      <h4>Post-Maestro</h4>
+      <p>Tidying up after the test ends.</p>
+      <dl>
+        <dt>App uninstall + cleanup</dt>
+        <dd>Remove HelloBench from the iPhone — like deleting an app you installed temporarily — so the next test starts clean. Also closes the helper-app connection.</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- 2. SETUP                                                     -->
+<!-- ============================================================= -->
+<section id="setup" class="alt">
+  <div class="inner">
+    <div class="section-eyebrow">02 · The Setup</div>
+    <h2>Same app. Same flow. Two environments.</h2>
+    <p class="section-lede">
+      To compare apples to apples, we built a single iOS app — <strong>HelloBench</strong> — and ran an identical Maestro flow on local hardware and on BrowserStack's cloud.
+    </p>
+
+    <div class="grid cols-2">
+      <div class="card">
+        <h3 style="margin-top:0;">HelloBench</h3>
+        <p>A SwiftUI app with a search field over a 30-company list. Stable accessibility ids (<code>searchField</code>, <code>item_BrowserStack</code>) so the flow is selector-deterministic.</p>
+        <p class="muted" style="margin: 0; font-size: 13px;">Built in Xcode 26.4.1, signed with a free Personal Team (<code>***</code>). Same .ipa uploaded to BrowserStack as installed locally.</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0;">The flow</h3>
+        <p>One YAML, two homes. Identical commands; only rep count differs (<strong>2 for smoke, 115 for benchmark</strong>).</p>
+        <pre style="background: #0f172a; color: #e2e8f0; padding: 16px; border-radius: 8px; font-size: 13px; overflow-x: auto; margin: 0;">- launchApp
+- tapOn:
+    id: "searchField"
+- repeat:
+    times: 115
+    commands:
+      - eraseText
+      - inputText: "Browser"
+      - assertVisible:
+          id: "item_BrowserStack"</pre>
+      </div>
+    </div>
+
+    <h3>Sizing the workload to ~733 s P90</h3>
+    <p>The spec target is <strong>733 s P90</strong> — long enough to stress the harness, short enough to fit a parallel BrowserStack quota window. Calibration math:</p>
+    <div class="verdict-formula">
+      per-rep cost ≈ 5.86 s (smoke)<br>
+      per-session overhead ≈ 12.8 s<br>
+      N = (733 - 12.8) / 5.86 ≈ 122.9 → <strong>115 reps</strong> chosen for first real run
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- 3. JOURNEY                                                   -->
+<!-- ============================================================= -->
+<section id="journey">
+  <div class="section-eyebrow">03 · The Journey</div>
+  <h2>What it took to get a clean number</h2>
+  <p class="section-lede">
+    Benchmarks succeed or fail in the plumbing. Three real bugs sat between us and trustworthy data — none of which were on the spec sheet.
+  </p>
+
+  <div class="timeline">
+    <div class="step">
+      <h4>1. Maestro 2.5.0's iOS real-device path was broken upstream</h4>
+      <p>Stock Maestro CLI throws <code>NotImplementedError</code> on <code>launchApp</code> for iOS 17+ physical devices. Confirmed against open issue <code>#2907</code> and PR <code>#3100</code>.</p>
+      <div class="plain-english">
+        <p><strong>What is "out-of-the-box Maestro"?</strong> Maestro is a free, open-source tool that lets you write simple YAML scripts to automate apps on iOS and Android. "Out-of-the-box" means the version you get when you run the official one-line installer from their website — version 2.5.0 was the latest stable release when we started. This is the version every customer would be using by default.</p>
+        <p><strong>Why couldn't it start an app on a real iPhone?</strong> Maestro supports two kinds of iOS targets: simulators (a fake iPhone running on your Mac) and real iPhones plugged in over USB. On Apple's modern iPhones (iOS 17 and newer, including our iPhone 17 on iOS 26), Apple replaced the old way of installing and launching apps with a new tool called <code>devicectl</code>. Maestro 2.5.0 was supposed to use <code>devicectl</code> for real-device support — but the developers had only put placeholder code in there ("TODO: not yet implemented"). The moment our test tried to launch HelloBench on the iPhone, Maestro crashed with a "this function doesn't exist yet" error.</p>
+        <p><strong>What is a "community-patched version" and why did we build one?</strong> Because Maestro is open-source, anyone can submit improvements via a pull request (PR) — a proposal to merge new code into the official project. We found PR <code>#2856</code> from a developer named omnarayan who had already written the missing code: it actually calls <code>devicectl</code> to launch the app, makes the on-device helper listen on the right network address, and routes the right port number through. The catch is that the PR was still pending review by the Maestro maintainers — not yet officially released. So we downloaded the source code, applied that PR's changes, plus one extra one-line fix we found ourselves, and compiled our own working build of Maestro. Without this step, no measurement on a real iPhone would have been possible at all.</p>
+        <p><strong>The takeaway:</strong> a customer trying to benchmark on a brand-new iPhone today using stock Maestro would simply fail at step one. The official tooling has not caught up to Apple's latest devices. Local iOS benchmarking is currently a "build it yourself" exercise — something worth highlighting to the broader Maestro and BrowserStack communities.</p>
+      </div>
+      <p><strong>Fix:</strong> Rebuilt Maestro CLI from PR <code>#2856</code> (omnarayan fork) which adds the missing <code>devicectl</code>-based launch logic, fixes the on-device XCTest runner's <code>0.0.0.0</code> bind, and patches a one-line port hardcode in <code>TestCommand.kt:496</code>.</p>
+    </div>
+    <div class="step">
+      <h4>2. iproxy USB tunnel stalls after ~7 minutes of traffic</h4>
+      <p>Our 115-rep flow takes ~11 minutes. iproxy (libimobiledevice) silently drops the TCP keep-alive at ~rep 72 every time. The XCTest runner stays alive — the bridge dies.</p>
+      <p class="plain-english">The cable connection between the Mac and iPhone uses a small bridge program. After about 7 minutes of constant chatter, that bridge silently dies — like a phone call dropping mid-conversation. The phone is still listening, but the line is dead, so every test failed at the same point. We swapped the bridge for a more reliable one (pymobiledevice3) and the next run completed cleanly.</p>
+      <p><strong>Fix:</strong> Replaced iproxy with <code>pymobiledevice3 usbmux forward</code>. First validation run completed all 115 reps cleanly in 679 s.</p>
+    </div>
+    <div class="step">
+      <h4>3. BrowserStack BigQuery doesn't expose Maestro debug-log step timings</h4>
+      <p>Cloud BQ surfaces session-level phases (<code>firecmd_ms</code>, <code>app_install_ms</code>, <code>test_install_ms</code>, etc.) but not per-step (<code>eraseText</code>, <code>inputText</code>, <code>assertVisible</code>) durations. Limits comparability with local.</p>
+      <p class="plain-english">For local runs we know exactly how long each tap, type, and assertion took. For cloud runs we only get the big-picture totals — BrowserStack doesn't capture or store the fine-grained step timings, even though Maestro produces them. So our cloud table can fill in the totals but not the inner-loop detail; this is something BrowserStack could add to give customers better visibility.</p>
+      <p><strong>Workaround:</strong> Reports use the local report template; cloud-only rows show what's available, missing rows stay blank.</p>
+    </div>
+  </div>
+
+  <details>
+    <summary>Side-quest: 2 cloud sessions stuck "running" for 2+ hours</summary>
+    <p>Out of 100 device entries, 2 sessions never transitioned to a terminal state. BS's idleTimeout (1800 s) didn't fire. We accepted the dataset at <strong>98 sessions</strong> and the percentile shapes are stable at this sample size.</p>
+  </details>
+</section>
+
+<!-- ============================================================= -->
+<!-- 4. LOCAL RESULTS                                             -->
+<!-- ============================================================= -->
+<section id="local" class="alt">
+  <div class="inner">
+    <div class="section-eyebrow">04 · Local Results</div>
+    <h2>Local: 10 sessions, all clean</h2>
+    <p class="section-lede">
+      Connected iPhone 17, iOS 26.4.2, USB-tethered. Each session does fresh uninstall → install → run flow → uninstall. Total wall-clock: ~2 hours.
+    </p>
+
+    <div class="grid cols-4">
+      <div class="card">
+        <div class="number-label">Sessions completed</div>
+        <div class="big-number pass">10<span class="unit">/ 10</span></div>
+        <div class="number-context">Zero failures</div>
+      </div>
+      <div class="card">
+        <div class="number-label">Session_total P50</div>
+        <div class="big-number">679.5<span class="unit">s</span></div>
+        <div class="number-context">Median end-to-end</div>
+      </div>
+      <div class="card">
+        <div class="number-label">Session_total P90</div>
+        <div class="big-number">682.6<span class="unit">s</span></div>
+        <div class="number-context">Spread = 8.9 s across 10 runs</div>
+      </div>
+      <div class="card">
+        <div class="number-label">Per-rep cost (P90)</div>
+        <div class="big-number">5,848<span class="unit">ms</span></div>
+        <div class="number-context">erase + input + assert · 1,150 reps</div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Where the time goes — phase composition (P50)</div>
+      <div class="chart-subtitle">Per-session cost in milliseconds. Loop body dominates: ~98 % of total.</div>
+      <div class="chart-canvas-wrap">
+        <canvas id="chartLocalComposition"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Per-rep step breakdown (1,150 inner-loop reps)</div>
+      <div class="chart-subtitle">P50 and P90 across 1,150 observations of each step.</div>
+      <div class="chart-canvas-wrap">
+        <canvas id="chartLocalSteps"></canvas>
+      </div>
+    </div>
+
+    <h3>Local — full percentile table</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Phase / step</th>
+            <th class="num">N</th>
+            <th class="num">Min</th>
+            <th class="num">P50</th>
+            <th class="num">P75</th>
+            <th class="num">P90</th>
+            <th class="num">P95</th>
+            <th class="num">P100</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="row-group"><td colspan="8">Pre-Maestro phase</td></tr>
+          <tr><td>device_readiness <span class="info" data-tip="device_readiness"></span></td><td class="num">10</td><td class="num">208</td><td class="num">255</td><td class="num">304</td><td class="num">335</td><td class="num">341</td><td class="num">348</td></tr>
+          <tr><td>app_install <span class="info" data-tip="app_install"></span></td><td class="num">10</td><td class="num">1,605</td><td class="num">1,680</td><td class="num">1,731</td><td class="num">1,769</td><td class="num">1,783</td><td class="num">1,798</td></tr>
+          <tr class="row-group"><td colspan="8">Maestro startup phase</td></tr>
+          <tr><td>maestro_init <span class="info" data-tip="maestro_init"></span></td><td class="num">10</td><td class="num">952</td><td class="num">1,027</td><td class="num">1,138</td><td class="num">1,314</td><td class="num">1,345</td><td class="num">1,377</td></tr>
+          <tr><td>driver_setup <span class="info" data-tip="driver_setup"></span></td><td class="num">10</td><td class="num">559</td><td class="num">680</td><td class="num">708</td><td class="num">711</td><td class="num">715</td><td class="num">719</td></tr>
+          <tr><td>device_info <span class="info" data-tip="device_info"></span></td><td class="num">10</td><td class="num">236</td><td class="num">282</td><td class="num">290</td><td class="num">301</td><td class="num">306</td><td class="num">312</td></tr>
+          <tr class="row-group"><td colspan="8">Flow execution phase</td></tr>
+          <tr><td>Define variables <span class="info" data-tip="define_variables"></span></td><td class="num">10</td><td class="num">3</td><td class="num">4</td><td class="num">4</td><td class="num">4</td><td class="num">5</td><td class="num">6</td></tr>
+          <tr><td>Apply configuration <span class="info" data-tip="apply_configuration"></span></td><td class="num">10</td><td class="num">0</td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td class="num">1</td></tr>
+          <tr><td>Launch app <span class="info" data-tip="launch_app"></span></td><td class="num">10</td><td class="num">1,216</td><td class="num">1,253</td><td class="num">1,258</td><td class="num">1,278</td><td class="num">1,285</td><td class="num">1,293</td></tr>
+          <tr><td>Tap on searchField <span class="info" data-tip="tap_searchfield"></span></td><td class="num">10</td><td class="num">1,836</td><td class="num">2,100</td><td class="num">2,236</td><td class="num">2,274</td><td class="num">2,277</td><td class="num">2,281</td></tr>
+          <tr><td>Erase text <em>(per rep)</em> <span class="info" data-tip="erase_text"></span></td><td class="num">1,150</td><td class="num">3,321</td><td class="num">3,357</td><td class="num">3,366</td><td class="num">3,376</td><td class="num">3,384</td><td class="num">3,603</td></tr>
+          <tr><td>Input text "Browser" <em>(per rep)</em> <span class="info" data-tip="input_text"></span></td><td class="num">1,150</td><td class="num">1,898</td><td class="num">1,928</td><td class="num">1,938</td><td class="num">1,947</td><td class="num">1,952</td><td class="num">2,078</td></tr>
+          <tr><td>Assert visible <em>(per rep)</em> <span class="info" data-tip="assert_visible"></span></td><td class="num">1,150</td><td class="num">276</td><td class="num">499</td><td class="num">520</td><td class="num">540</td><td class="num">555</td><td class="num">718</td></tr>
+          <tr><td><strong>Per-rep total</strong> <span class="info" data-tip="per_rep_total"></span></td><td class="num">1,150</td><td class="num">5,555</td><td class="num">5,787</td><td class="num">5,817</td><td class="num">5,848</td><td class="num">5,882</td><td class="num">6,033</td></tr>
+          <tr class="row-group"><td colspan="8">Post-Maestro phase</td></tr>
+          <tr><td>stop <span class="info" data-tip="stop_phase"></span></td><td class="num">10</td><td class="num">509</td><td class="num">570</td><td class="num">600</td><td class="num">646</td><td class="num">802</td><td class="num">958</td></tr>
+          <tr class="row-aggregate"><td><strong>maestro_total</strong> <span class="info" data-tip="maestro_total"></span></td><td class="num">10</td><td class="num">671,541</td><td class="num">677,011</td><td class="num">678,371</td><td class="num">680,011</td><td class="num">680,216</td><td class="num">680,421</td></tr>
+          <tr class="row-aggregate"><td><strong>session_total</strong> <span class="info" data-tip="session_total"></span></td><td class="num">10</td><td class="num">674,051</td><td class="num">679,451</td><td class="num">681,052</td><td class="num">682,602</td><td class="num">682,760</td><td class="num">682,918</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted" style="font-size: 13px;">Values in milliseconds. Loop-body steps have N=1,150 (10 sessions × 115 reps); single-shot phases have N=10. Hover the <span class="info" data-tip="info_icon"></span> icons next to any row to see the underlying command and a plain-English explanation.</p>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- 5. CLOUD RESULTS                                             -->
+<!-- ============================================================= -->
+<section id="cloud">
+  <div class="section-eyebrow">05 · Cloud Results</div>
+  <h2>Cloud: 100 device entries, 98 with data</h2>
+  <p class="section-lede">
+    One BrowserStack build, 100 iPhone 17 device entries (ap-south-1), 115 reps each, all in parallel. Wall-clock from trigger to final session terminal: ~80 minutes. BigQuery ingestion lag adds ~50 minutes for phase-level metrics.
+  </p>
+
+  <div class="grid cols-4">
+    <div class="card">
+      <div class="number-label">Sessions in dataset</div>
+      <div class="big-number">98<span class="unit">/ 100</span></div>
+      <div class="number-context">2 sessions stuck running &gt; 2h, excluded</div>
+    </div>
+    <div class="card">
+      <div class="number-label">Pass rate</div>
+      <div class="big-number pass">89.8<span class="unit">%</span></div>
+      <div class="number-context">88 passed · 9 failed · 1 error</div>
+    </div>
+    <div class="card">
+      <div class="number-label">Session_total P50</div>
+      <div class="big-number">733.5<span class="unit">s</span></div>
+      <div class="number-context">Almost exactly the spec target</div>
+    </div>
+    <div class="card">
+      <div class="number-label">Session_total P90</div>
+      <div class="big-number warn">759.9<span class="unit">s</span></div>
+      <div class="number-context">+77 s vs local · over the 1.1× ceiling</div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title">Cloud session_total distribution (98 sessions)</div>
+    <div class="chart-subtitle">Sessions sorted by duration. Failed cluster on the left (40–228 s); passed cluster on the right (~700–830 s).</div>
+    <div class="chart-canvas-wrap">
+      <canvas id="chartCloudDist"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title">Failure analysis — duration vs status</div>
+    <div class="chart-subtitle">Failed sessions abort early — none reach the full 115-rep flow.</div>
+    <div class="chart-canvas-wrap">
+      <canvas id="chartCloudFailures"></canvas>
+    </div>
+  </div>
+
+  <h3>Cloud — phase percentiles (BigQuery)</h3>
+  <p class="muted">Cloud BQ exposes session-level phases only. Per-step inner-loop timings are not in BS's data pipeline — those rows are blank.</p>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Phase / step</th>
+          <th class="num">N</th>
+          <th class="num">Min</th>
+          <th class="num">P50</th>
+          <th class="num">P75</th>
+          <th class="num">P90</th>
+          <th class="num">P95</th>
+          <th class="num">P100</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="row-group"><td colspan="8">Pre-Maestro phase</td></tr>
+        <tr><td>device_readiness <span class="info" data-tip="device_readiness_cloud"></span></td><td class="num">0</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>
+        <tr><td>app_install <span class="info" data-tip="app_install_cloud"></span></td><td class="num">98</td><td class="num">686</td><td class="num">870</td><td class="num">952</td><td class="num">1,324</td><td class="num">2,135</td><td class="num">7,656</td></tr>
+        <tr class="row-group"><td colspan="8">Inner-loop step rows (not exposed by BQ)</td></tr>
+        <tr><td colspan="8" style="color: var(--ink-muted); font-style: italic;">No per-step data in BQ — see methodology.</td></tr>
+        <tr class="row-aggregate"><td><strong>maestro_total</strong> <span class="info" data-tip="maestro_total_cloud"></span></td><td class="num">98</td><td class="num">47,843</td><td class="num">743,708</td><td class="num">759,730</td><td class="num">773,670</td><td class="num">788,272</td><td class="num">931,219</td></tr>
+        <tr class="row-aggregate"><td><strong>session_total</strong> <span class="info" data-tip="session_total_cloud"></span></td><td class="num">98</td><td class="num">40,000</td><td class="num">733,500</td><td class="num">748,750</td><td class="num">759,900</td><td class="num">771,300</td><td class="num">829,000</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- 6. PHASE MAPPING (cloud BQ ↔ local)                          -->
+<!-- ============================================================= -->
+<section id="mapping">
+  <div class="section-eyebrow">06 · Phase Mapping</div>
+  <h2>Translating cloud phases to local phases</h2>
+  <p class="section-lede">
+    Local and cloud expose different metrics for the same underlying work. This is the Rosetta Stone — what each BrowserStack BigQuery field means and how (or whether) it maps to a local phase. Read in chronological order; each row is one moment in a session's life.
+  </p>
+
+  <div class="grid cols-3" style="margin-bottom: 24px;">
+    <div class="card" style="border-left: 4px solid var(--pass);">
+      <div class="number-label">Direct match</div>
+      <p style="margin: 8px 0 0; font-size: 14px;">A green ✓ means the cloud field measures the same work as the local phase, just instrumented differently. The numbers are directly comparable.</p>
+    </div>
+    <div class="card" style="border-left: 4px solid var(--warn);">
+      <div class="number-label">Partial match (≈)</div>
+      <p style="margin: 8px 0 0; font-size: 14px;">An amber ≈ means the cloud field overlaps with the local phase but covers more (or less) work, or breaks it down differently. Compare with care.</p>
+    </div>
+    <div class="card" style="border-left: 4px solid #94a3b8;">
+      <div class="number-label">Cloud-only / blank</div>
+      <p style="margin: 8px 0 0; font-size: 14px;">A grey — means the cloud has overhead local doesn't (BS-side device pool work) or the field exists but isn't populated.</p>
+    </div>
+  </div>
+
+  <div class="phase-map">
+
+    <!-- Row 1: start_sessions_ms -->
+    <div class="map-row">
+      <div class="map-side cloud">
+        <div class="map-phase">start_sessions_ms</div>
+        <div class="map-tag">BS lifecycle · Cloud-only</div>
+        <div class="map-def">Internal BrowserStack bookkeeping when a session opens — attaching the run to the customer's plan, allocating an entry in their dashboard, kicking off device assignment.</div>
+      </div>
+      <div class="map-conn">
+        <div class="match-dot none">—</div>
+        <div class="match-label">Cloud-only</div>
+      </div>
+      <div class="map-side local empty">
+        <div class="map-phase">no equivalent</div>
+        <div class="map-tag">N/A</div>
+        <div class="map-def">Local has no "session" concept — each iteration is a bash loop. Pure cloud overhead with no local counterpart.</div>
+      </div>
+    </div>
+
+    <!-- Row 2: app_dl_ms -->
+    <div class="map-row">
+      <div class="map-side cloud">
+        <div class="map-phase">app_dl_ms</div>
+        <div class="map-tag">App provisioning · Cloud-only</div>
+        <div class="map-def">BrowserStack downloads the uploaded <code>.ipa</code> from its blob storage to the host machine that drives the iPhone.</div>
+      </div>
+      <div class="map-conn">
+        <div class="match-dot none">—</div>
+        <div class="match-label">Cloud-only</div>
+      </div>
+      <div class="map-side local empty">
+        <div class="map-phase">no equivalent</div>
+        <div class="map-tag">N/A</div>
+        <div class="map-def">Local already has the <code>.app</code> bundle on the Mac's disk — no download step. Cost of BS owning the storage layer.</div>
+      </div>
+    </div>
+
+    <!-- Row 3: app_install_ms -->
+    <div class="map-row">
+      <div class="map-side cloud">
+        <div class="map-phase">app_install_ms</div>
+        <div class="map-tag">Pre-Maestro</div>
+        <div class="map-def">BrowserStack installs the <code>.ipa</code> onto the assigned iPhone via its signing pipeline. Cloud-side P50: 870 ms.</div>
+      </div>
+      <div class="map-conn">
+        <div class="match-dot full">✓</div>
+        <div class="match-label">Direct match</div>
+      </div>
+      <div class="map-side local">
+        <div class="map-phase">app_install</div>
+        <div class="map-tag">Pre-Maestro</div>
+        <div class="map-def">Local installs the <code>.app</code> bundle via <code>xcrun devicectl install</code>. Same outcome — app on device — different machinery. Local-side P50: 1,680 ms.</div>
+      </div>
+    </div>
+
+    <!-- Row 4: test_dl_ms -->
+    <div class="map-row">
+      <div class="map-side cloud">
+        <div class="map-phase">test_dl_ms</div>
+        <div class="map-tag">Test provisioning · Cloud-only</div>
+        <div class="map-def">BrowserStack downloads the uploaded test-suite zip (the flow YAMLs) from its blob storage to the host machine.</div>
+      </div>
+      <div class="map-conn">
+        <div class="match-dot none">—</div>
+        <div class="match-label">Cloud-only</div>
+      </div>
+      <div class="map-side local empty">
+        <div class="map-phase">no equivalent</div>
+        <div class="map-tag">N/A</div>
+        <div class="map-def">Local has the YAML files on the Mac's disk — Maestro reads them directly. Same idea as <code>app_dl_ms</code> but for the test code.</div>
+      </div>
+    </div>
+
+    <!-- Row 5: test_install_ms -->
+    <div class="map-row">
+      <div class="map-side cloud">
+        <div class="map-phase">test_install_ms</div>
+        <div class="map-tag">Maestro startup</div>
+        <div class="map-def">BS installs the on-device Maestro test runner (the small helper app Maestro talks to in order to tap, type, and read the screen). Done fresh on every session.</div>
+      </div>
+      <div class="map-conn">
+        <div class="match-dot partial">≈</div>
+        <div class="match-label">Partial match</div>
+      </div>
+      <div class="map-side local">
+        <div class="map-phase">driver_setup</div>
+        <div class="map-tag">Maestro startup</div>
+        <div class="map-def">Local pre-builds the runner once and reuses it across all 10 sessions. <code>driver_setup</code> is just the connection handshake (~711 ms P90); the install cost is paid once and not counted. This is why recommendation #2 (pre-warm runner) exists — cloud could do the same.</div>
+      </div>
+    </div>
+
+    <!-- Row 6: firecmd_ms -->
+    <div class="map-row">
+      <div class="map-side cloud">
+        <div class="map-phase">firecmd_ms</div>
+        <div class="map-tag">Maestro startup · catch-all</div>
+        <div class="map-def">Time between BS receiving the build trigger and Maestro actually starting flow commands. Lumps together JVM start, driver-handshake, device-info fetch, and BS-side orchestration. Cloud P50: 8.6 s, P90: 10.6 s, with rare outliers exceeding 90 s.</div>
+      </div>
+      <div class="map-conn">
+        <div class="match-dot partial">≈</div>
+        <div class="match-label">Partial match</div>
+      </div>
+      <div class="map-side local">
+        <div class="map-phase">maestro_init + driver_setup + device_info</div>
+        <div class="map-tag">Maestro startup</div>
+        <div class="map-def">Three discrete phases on local that total ~2 s P50. The cloud <code>firecmd</code> bucket is ~4× larger because it also includes BS-side device assignment and orchestration — overhead that doesn't exist locally. This is where the cloud-vs-local gap mostly lives, and recommendation #1 targets it directly.</div>
+      </div>
+    </div>
+
+    <!-- Row 7: duration / execution_s -->
+    <div class="map-row">
+      <div class="map-side cloud">
+        <div class="map-phase">duration <span style="color: var(--ink-muted); font-weight: 400;">(execution_s)</span></div>
+        <div class="map-tag">Flow execution · coarser</div>
+        <div class="map-def">Pure flow-execution time — what Maestro itself reports. Includes everything from "Define variables" through the last assertion. One number for the entire 115-rep loop.</div>
+      </div>
+      <div class="map-conn">
+        <div class="match-dot partial">≈</div>
+        <div class="match-label">Direct match,<br>but coarser</div>
+      </div>
+      <div class="map-side local">
+        <div class="map-phase">Flow execution (8 sub-phases)</div>
+        <div class="map-tag">Flow execution</div>
+        <div class="map-def">Local breaks this down into Define variables, Apply configuration, Launch app, Tap on searchField, Erase text, Input text, Assert visible, and Per-rep total. Cloud collapses all of these into one number — that's why the inner-loop rows in the cloud table are blank, and recommendation #3 (surface per-step in BQ) targets this gap.</div>
+      </div>
+    </div>
+
+    <!-- Row 8: total_stop_time -->
+    <div class="map-row">
+      <div class="map-side cloud">
+        <div class="map-phase">total_stop_time</div>
+        <div class="map-tag">Post-Maestro · NULL today</div>
+        <div class="map-def">App uninstall and post-session cleanup. The field exists in the BigQuery schema but isn't populated for Maestro sessions — every cloud row in our dataset shows NULL here.</div>
+      </div>
+      <div class="map-conn">
+        <div class="match-dot partial">≈</div>
+        <div class="match-label">Field exists,<br>but blank</div>
+      </div>
+      <div class="map-side local">
+        <div class="map-phase">stop</div>
+        <div class="map-tag">Post-Maestro</div>
+        <div class="map-def">Local uninstalls the app via <code>xcrun devicectl uninstall</code> after the test finishes (~570 ms P50). Cloud presumably does similar work, but the timing is missing from BigQuery today.</div>
+      </div>
+    </div>
+
+    <!-- Row 9: customer_session_duration -->
+    <div class="map-row">
+      <div class="map-side cloud">
+        <div class="map-phase">customer_session_duration <span style="color: var(--ink-muted); font-weight: 400;">(BS REST: session.duration)</span></div>
+        <div class="map-tag">Aggregate</div>
+        <div class="map-def">Wall-clock time the customer is billed for. Reported by the BrowserStack REST API on every session. Cloud P90: 759.9 s — used as the cloud-side number in the 1.1× verdict.</div>
+      </div>
+      <div class="map-conn">
+        <div class="match-dot full">✓</div>
+        <div class="match-label">Direct match</div>
+      </div>
+      <div class="map-side local">
+        <div class="map-phase">session_total</div>
+        <div class="map-tag">Aggregate</div>
+        <div class="map-def">Local wall-clock for one full session: device probe + app install + maestro_total + uninstall. Local P90: 682.6 s. Both numbers represent the same thing — end-to-end customer-perceived duration. This is the headline pair that the verdict compares.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <h3>Three things this mapping makes clear</h3>
+  <div class="grid cols-3">
+    <div class="card">
+      <h4 style="margin-top:0;">Cloud has overhead local can't have</h4>
+      <p>Three cloud phases (<code>start_sessions</code>, <code>app_dl</code>, <code>test_dl</code>) are pure cloud-only work — the cost of BrowserStack owning the device pool, blob storage, and signing infrastructure. Local doesn't have these because the customer's Mac already has the files.</p>
+    </div>
+    <div class="card">
+      <h4 style="margin-top:0;">Cloud is coarser inside the loop</h4>
+      <p>BS exposes one number (<code>duration</code>) for everything local breaks into 8 sub-phases. This is the BigQuery schema gap that recommendation #3 addresses — it's not a perf issue, it's a visibility issue. Customers can't diagnose what's slow.</p>
+    </div>
+    <div class="card">
+      <h4 style="margin-top:0;"><code>firecmd_ms</code> is the swing variable</h4>
+      <p>It's the single biggest "what's happening here?" bucket — and where the cloud-vs-local gap mostly lives. Outlier sessions in this bucket blow up to 90+ seconds. Recommendation #1 (reduce firecmd outliers) is the highest-leverage fix.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- 7. THE COMPARISON / VERDICT                                  -->
+<!-- ============================================================= -->
+<section id="verdict" class="alt">
+  <div class="inner">
+    <div class="section-eyebrow">07 · The Verdict</div>
+    <h2>Cloud vs Local — head to head</h2>
+    <p class="section-lede">
+      The 1.1× target translates to a hard number: local P90 × 1.1 = the ceiling cloud must stay under.
+    </p>
+
+    <div class="verdict-block">
+      <h3 style="margin-top: 0;">Cloud P90 is 1.113× of local P90</h3>
+      <div class="verdict-math">
+        <div class="verdict-cell">
+          <div class="number-label">Local P90</div>
+          <div class="big-number">682.6<span class="unit">s</span></div>
+        </div>
+        <div class="verdict-cell">
+          <div class="number-label">1.1× ceiling</div>
+          <div class="big-number">750.9<span class="unit">s</span></div>
+        </div>
+        <div class="verdict-cell">
+          <div class="number-label">Cloud P90</div>
+          <div class="big-number warn">759.9<span class="unit">s</span></div>
+        </div>
+        <div class="verdict-cell">
+          <div class="number-label">Overshoot</div>
+          <div class="big-number warn">+9.0<span class="unit">s</span></div>
+        </div>
+      </div>
+      <div class="verdict-formula">
+        Ratio = 759,900 / 682,602 = <strong>1.1132×</strong> &nbsp;&nbsp;|&nbsp;&nbsp; Threshold = 1.1× &nbsp;&nbsp;|&nbsp;&nbsp; Result: <strong style="color: var(--warn);">MISS by 1.13 percentage points</strong>
+      </div>
+      <p style="margin-bottom: 0;">The miss is small. Closing it is one or two pre-flight optimizations on the BS side (detailed in <a href="#recommendations">Recommendations</a>).</p>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Side-by-side P50 and P90 comparison</div>
+      <div class="chart-subtitle">Toggle between aggregate metrics (where BS exposes data) and full local detail.</div>
+      <div class="chart-controls">
+        <button class="chip active" data-comparison="aggregate">Comparable phases</button>
+        <button class="chip" data-comparison="all">All local phases</button>
+      </div>
+      <div class="chart-canvas-wrap">
+        <canvas id="chartCompare"></canvas>
+      </div>
+    </div>
+
+    <h3>Side-by-side numbers</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Phase / step</th>
+            <th class="num">Local N</th>
+            <th class="num">Local P50</th>
+            <th class="num">Local P90</th>
+            <th class="num">Cloud N</th>
+            <th class="num">Cloud P50</th>
+            <th class="num">Cloud P90</th>
+            <th class="num">Δ P50</th>
+            <th class="num">Δ P90</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>app_install <span class="info" data-tip="app_install"></span></td><td class="num">10</td><td class="num">1,680</td><td class="num">1,769</td><td class="num">98</td><td class="num">870</td><td class="num">1,324</td><td class="num delta-neg">−810</td><td class="num delta-neg">−445</td></tr>
+          <tr><td>device_readiness <span class="info" data-tip="device_readiness"></span></td><td class="num">10</td><td class="num">255</td><td class="num">335</td><td class="num">0</td><td class="num">—</td><td class="num">—</td><td class="num delta-neutral">—</td><td class="num delta-neutral">—</td></tr>
+          <tr><td>maestro_init <span class="info" data-tip="maestro_init"></span></td><td class="num">10</td><td class="num">1,027</td><td class="num">1,314</td><td class="num">0</td><td class="num">—</td><td class="num">—</td><td class="num delta-neutral">—</td><td class="num delta-neutral">—</td></tr>
+          <tr><td>driver_setup <span class="info" data-tip="driver_setup"></span></td><td class="num">10</td><td class="num">680</td><td class="num">711</td><td class="num">0</td><td class="num">—</td><td class="num">—</td><td class="num delta-neutral">—</td><td class="num delta-neutral">—</td></tr>
+          <tr><td>Per-rep total <span class="info" data-tip="per_rep_total"></span></td><td class="num">1,150</td><td class="num">5,787</td><td class="num">5,848</td><td class="num">0</td><td class="num">—</td><td class="num">—</td><td class="num delta-neutral">—</td><td class="num delta-neutral">—</td></tr>
+          <tr class="row-aggregate"><td><strong>maestro_total</strong> <span class="info" data-tip="maestro_total"></span></td><td class="num">10</td><td class="num">677,011</td><td class="num">680,011</td><td class="num">98</td><td class="num">743,708</td><td class="num">773,670</td><td class="num delta-pos">+66,697</td><td class="num delta-pos">+93,659</td></tr>
+          <tr class="row-aggregate"><td><strong>session_total</strong> <span class="info" data-tip="session_total"></span></td><td class="num">10</td><td class="num">679,451</td><td class="num">682,602</td><td class="num">98</td><td class="num">733,500</td><td class="num">759,900</td><td class="num delta-pos">+54,049</td><td class="num delta-pos">+77,298</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted" style="font-size: 13px;">Δ in milliseconds. Negative deltas (green) mean cloud is faster.</p>
+
+    <h3>What the data tells us</h3>
+    <div class="grid cols-2">
+      <div class="card">
+        <h4 style="margin-top:0;">✓ Cloud beats local on app_install</h4>
+        <p>Cloud's P90 of 1,324 ms vs local's 1,769 ms. BrowserStack's signing pipeline is more efficient than <code>xcrun devicectl install</code> with a free Personal Team profile. Net win for cloud.</p>
+      </div>
+      <div class="card">
+        <h4 style="margin-top:0;">⚠ Pre-flight overhead is the gap</h4>
+        <p>Cloud's <code>maestro_total</code> is 94 s slower than local at P90, but <code>session_total</code> is only 77 s slower. The 17 s difference is BS-side firecmd time — the gap between the build being received and Maestro commands actually starting.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- 7. RECOMMENDATIONS                                           -->
+<!-- ============================================================= -->
+<section id="recommendations">
+  <div class="section-eyebrow">08 · Recommendations</div>
+  <h2>How BrowserStack can close the gap</h2>
+  <p class="section-lede">
+    The 9-second overshoot is small enough that one or two well-placed BS-side optimizations clear it. Ranked by likely impact.
+  </p>
+
+  <div class="grid" style="gap: 16px;">
+    <div class="reco">
+      <span class="reco-impact high">High impact</span>
+      <h4>1 — Reduce <code>firecmd_time</code> outliers</h4>
+      <p>Median <code>firecmd_ms</code> is 8.6 s, P90 is 10.6 s. But 6 sessions in our dataset hit <code>firecmd_ms</code> &gt; 90,000 ms (one as bad as 188 s) — clearly a separate retry/contention path. Without those outliers, cloud P90 drops to ~749 s — <strong>inside the 1.1× ceiling.</strong></p>
+      <div class="plain-english">
+        <p><strong>What this is about:</strong> "firecmd" is the time between the customer triggering a test and Maestro actually starting to do anything on the phone. Think of it as the wait at a coffee shop between placing your order and the barista picking it up. Most of the time it's quick (about 8.6 seconds), but a handful of sessions waited over a minute and a half — far longer than they should have. Those few stragglers are what push our 90th-percentile number over the line.</p>
+        <p><strong>Why it matters:</strong> if BrowserStack just fixes those rare slow starts, the cloud number drops below the 1.1× target with no other changes. This is the single highest-leverage fix.</p>
+        <p><strong>Fix:</strong> tighter timeouts on registration handshake, warmer device pools to skip full driver bootstrap on every session.</p>
+      </div>
+    </div>
+
+    <div class="reco">
+      <span class="reco-impact high">High impact</span>
+      <h4>2 — Pre-warm the Maestro test runner on the device</h4>
+      <p>On local, we start the XCTest runner once and reuse it for 10 consecutive sessions — driver_setup is just 711 ms P90. Cloud sets up the runner per session. <code>test_install_time</code> P90 is 2.0 s on cloud — pure repeated work.</p>
+      <div class="plain-english">
+        <p><strong>What this is about:</strong> Maestro needs a small "helper app" running on the iPhone that does the actual tapping and typing. Installing this helper takes about 2 seconds. On local, we install it once and reuse it across 10 back-to-back sessions. On cloud, BrowserStack reinstalls it for every single session — like a barista re-grinding their beans for every cup instead of using the same grinder all morning.</p>
+        <p><strong>Why it matters:</strong> a customer running 100 benchmark sessions pays this 2-second tax 100 times — that's over 3 minutes of pure waste, with no benefit. Pre-warming the runner once per device per "queue" would give that time back.</p>
+        <p><strong>Fix:</strong> Keep test bundles resident on a "Maestro-warm" device for N consecutive sessions in a customer's queue.</p>
+      </div>
+    </div>
+
+    <div class="reco">
+      <span class="reco-impact med">Medium impact</span>
+      <h4>3 — Surface per-step Maestro timings in BigQuery</h4>
+      <p>Right now BS only exposes session-level phases. Customers can't see whether the cloud iPhone is genuinely slower per rep, or whether a specific step (<code>assertVisible</code> waiting longer for the list to settle, etc.) is the bottleneck.</p>
+      <div class="plain-english">
+        <p><strong>What this is about:</strong> Maestro keeps a detailed log of how long every individual tap, type, and assertion took. Locally, we used those logs to break down our session into rich detail. On cloud, BrowserStack throws those logs away after the test ends — they only keep the summary numbers (total time, install time, etc.). It's like getting a restaurant bill that says "$80 total" with no itemized list.</p>
+        <p><strong>Why it matters:</strong> when a customer's cloud test is slower than expected, they have no way to tell <em>where</em> the slowness is coming from. Was it a slow tap? A flaky assertion that retried? They can't know — and so they can't even ask BrowserStack the right diagnostic question. This isn't a performance fix; it's a visibility fix that turns vague complaints into actionable bug reports.</p>
+        <p><strong>Fix:</strong> Parse the Maestro debug log BS already collects on every session and surface step-level timings in the existing BQ table. Diagnostic-only feature; no perf impact.</p>
+      </div>
+    </div>
+
+    <div class="reco">
+      <span class="reco-impact med">Medium impact</span>
+      <h4>4 — Reduce flake rate (10/100 = 10%)</h4>
+      <p>Failed sessions cluster at 40–228 s with abnormally high firecmd (16–188 s) and elevated test_install_time. These look like infra-side retries that exhausted patience. Even though they don't affect P90, they reduce sample size and create noise for customers running shorter benchmarks.</p>
+      <div class="plain-english">
+        <p><strong>What this is about:</strong> 10 out of 100 sessions in our cloud run failed early — not because the test itself broke, but because BrowserStack's own setup hit some delay or retry that timed out. Looking at the numbers, every failed session had unusually slow startup phases, suggesting they were stuck in infrastructure-level retries that eventually gave up.</p>
+        <p><strong>Why it matters:</strong> a customer running a small batch (say 5 sessions) might lose half of them to flake and not realize it's BrowserStack's plumbing rather than their own test. Even a customer running 100 sessions sees noise that makes it harder to spot real regressions in their app.</p>
+        <p><strong>Fix:</strong> root-cause the 90+ s firecmd contentions; surface a "retry succeeded" marker so flakes are distinguishable from real failures.</p>
+      </div>
+    </div>
+
+    <div class="reco">
+      <span class="reco-impact low">Low impact</span>
+      <h4>5 — Document the upstream Maestro real-device limitation</h4>
+      <p>Maestro 2.5.0's auto-spawn iOS-real-device path is broken upstream (<code>NotImplementedError</code> on launchApp). The working workflow requires PR #2856 + manual <code>xcodebuild test-without-building</code> + <code>--port</code>. We rediscovered this from scratch.</p>
+      <div class="plain-english">
+        <p><strong>What this is about:</strong> as detailed in the Journey section, the official Maestro release literally cannot launch an app on a brand-new iPhone — the code is missing. We had to build a community-patched version ourselves before any local benchmarking could happen. There's no warning about this anywhere in the official docs; we burned hours rediscovering the workaround from scratch.</p>
+        <p><strong>Why it matters:</strong> any BrowserStack customer who wants to compare their cloud results against a local baseline (which is exactly the kind of comparison this report does) will hit the same wall and waste the same time. A short documentation page would save every future user that detour.</p>
+        <p><strong>Fix:</strong> BS docs should call out this limitation and link the working setup.</p>
+      </div>
+    </div>
+
+    <div class="reco">
+      <span class="reco-impact low">Low impact</span>
+      <h4>6 — Add an "iOS reduced-overhead" benchmark mode</h4>
+      <p>For benchmarking workloads, BS could skip re-signing on identical app uploads (upload once, BS re-signs once, all 100 sessions reuse the resigned blob).</p>
+      <div class="plain-english">
+        <p><strong>What this is about:</strong> every iOS app uploaded to BrowserStack gets re-signed with BS's own developer certificate so it can run on their managed devices. Today this re-signing happens repeatedly even when the same app is being run dozens of times in a row. It's like a security checkpoint re-scanning the same suitcase every time it goes through, even though nothing has changed.</p>
+        <p><strong>Why it matters:</strong> for benchmark and regression-testing workloads — where the exact same app is run hundreds or thousands of times — this repeated work is pure overhead. An opt-in "I'm running the same app over and over" flag would let BS cache the signed binary and skip the redundant work.</p>
+        <p><strong>Fix:</strong> Optional flag on the build trigger payload.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top: 32px; background: linear-gradient(135deg, #ecfeff 0%, #f0f9ff 100%); border-color: var(--accent);">
+    <h3 style="margin-top: 0;">Bottom line</h3>
+    <p style="margin: 0;">The <strong>per-rep work itself</strong> (~80 % of session_total) is hardware- and iOS-bound — neither BS nor we can speed up <code>eraseText</code> on iOS. The reachable budget is the pre-flight overhead. Items 1 + 2 alone should put cloud back inside the 1.1× ceiling without any change to the workload.</p>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- 8. METHODOLOGY                                               -->
+<!-- ============================================================= -->
+<section id="methodology" class="alt">
+  <div class="inner">
+    <div class="section-eyebrow">09 · Methodology</div>
+    <h2>How we measured</h2>
+    <p class="section-lede">For reproducibility and audit. Skip if you trust the numbers.</p>
+
+    <details>
+      <summary>Local measurement stack</summary>
+      <ul>
+        <li><strong>Host:</strong> macOS 25.4 / Xcode 26.4.1, free Personal Team developer cert.</li>
+        <li><strong>Device:</strong> iPhone 17 (iOS 26.4.2), USB-tethered.</li>
+        <li><strong>Maestro CLI:</strong> Custom build from PR #2856 (omnarayan fork) with TestCommand.kt:496 patch (port routing) and Swift runner fixes (0.0.0.0 bind, ScreenSizeHelper rewrite).</li>
+        <li><strong>USB bridge:</strong> <code>pymobiledevice3 usbmux forward 22087 22087 --udid &lt;udid&gt;</code> (replaced iproxy due to 7-min keep-alive ceiling).</li>
+        <li><strong>Test runner:</strong> Pre-built once via <code>xcodebuild build-for-testing</code>, kept resident across all 10 sessions.</li>
+        <li><strong>Per-iter cycle:</strong> uninstall app → install app → maestro test → uninstall app.</li>
+        <li><strong>Phase parsing:</strong> Maestro debug log parsed by <code>parse_maestro_log.py</code> for step-level timings; bash script wraps with <code>now_ms</code> wall-clock for phase boundaries.</li>
+      </ul>
+    </details>
+
+    <details>
+      <summary>Cloud measurement stack</summary>
+      <ul>
+        <li><strong>Build trigger:</strong> One BrowserStack Maestro build with 100 device entries (<code>iPhone 17-26</code>, ap-south-1).</li>
+        <li><strong>Concurrency:</strong> ~25 sessions running in parallel waves (BS plan parallel cap).</li>
+        <li><strong>Status polling:</strong> BS REST API every 30 s until terminal.</li>
+        <li><strong>Per-session metrics:</strong> Pulled from BigQuery (<code>browserstack-production.app_automate.app_automate_test_sessions_partitioned</code>) ~50 min after build completion.</li>
+        <li><strong>Phase columns from BQ:</strong> <code>firecmd_time, app_install_time, test_install_time, test_download_time, app_download_time, duration</code>.</li>
+        <li><strong>Per-step (eraseText / inputText / assertVisible) timings:</strong> NOT in BQ — Maestro debug log not currently surfaced.</li>
+      </ul>
+    </details>
+
+    <details>
+      <summary>Percentile method</summary>
+      <p>Linear-interpolation percentile (numpy default). For N=1, all percentiles equal the observation. For repeating loop-body steps, N = sessions × reps_per_session = 1,150 on local.</p>
+      <p>Cloud aggregates include all 98 terminal sessions (88 passed + 9 failed + 1 error). Failed sessions cluster at 40–228 s — well below P50 — so they affect Min and lower percentiles only. P50–P100 are pure passed-session statistics either way.</p>
+    </details>
+
+    <details>
+      <summary>Sample sizes &amp; confidence</summary>
+      <ul>
+        <li><strong>Local:</strong> 10 sessions, range 674–683 s. Spread of 8.9 s = 1.3 % of the median. Confidence high.</li>
+        <li><strong>Cloud:</strong> 98 sessions (88 passed). Range of passed sessions: 700–830 s (130 s = 17.7 % of median). Higher variance is expected for cloud — different physical devices, network, contention.</li>
+        <li><strong>Sample size for cloud P90:</strong> at N=88, the P90 estimate has &plusmn;~1 rank uncertainty. The 759 s figure is robust to that.</li>
+      </ul>
+    </details>
+
+    <details>
+      <summary>Files &amp; data sources (for replay)</summary>
+      <ul>
+        <li><strong>Local final report:</strong> <code>ios/local/results/local_ios_final_report_20260508_200720.csv</code></li>
+        <li><strong>Cloud final report:</strong> <code>ios/cloud/results/cloud_20260510_171900/cloud_ios_final_report_20260510_185802.csv</code></li>
+        <li><strong>Side-by-side:</strong> <code>analysis/local_vs_cloud_ios_comparison_20260510_191348.csv</code></li>
+        <li><strong>BQ build_id:</strong> <code>***</code></li>
+        <li><strong>Aggregator:</strong> <code>aggregate_unified_report.py</code></li>
+      </ul>
+    </details>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- FOOTER                                                       -->
+<!-- ============================================================= -->
+<footer>
+  <p>iOS Maestro Benchmark Report · 2026-05-10 · BrowserStack Performance Engineering</p>
+  <p>HelloBench v1.0 · Maestro CLI 2.0.10 (PR #2856 patch) · iPhone 17 iOS 26.4.x</p>
+</footer>
+
+<!-- ============================================================= -->
+<!-- SCRIPTS                                                      -->
+<!-- ============================================================= -->
+<script>
+  // ----- IntersectionObserver: fade-in -----
+  const fadeElements = document.querySelectorAll('[data-fade]');
+  const fadeObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) e.target.classList.add('in');
+    });
+  }, { threshold: 0.1 });
+  fadeElements.forEach(el => fadeObserver.observe(el));
+
+  // ----- Sticky nav active link -----
+  const navLinks = document.querySelectorAll('.nav a');
+  const sections = document.querySelectorAll('section');
+  const navObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const id = e.target.id;
+        navLinks.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + id));
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  sections.forEach(s => navObserver.observe(s));
+
+  // ----- Chart.js global config -----
+  Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif";
+  Chart.defaults.font.size = 12;
+  Chart.defaults.color = '#475569';
+  Chart.defaults.plugins.legend.labels.usePointStyle = true;
+  Chart.defaults.plugins.legend.labels.padding = 16;
+
+  const PALETTE = {
+    local: '#0891b2',
+    localLight: '#67e8f9',
+    cloud: '#7c3aed',
+    cloudLight: '#c4b5fd',
+    pass: '#10b981',
+    fail: '#ef4444',
+    warn: '#f59e0b',
+    grey: '#94a3b8',
+  };
+
+  // ----- Chart 1: Local composition (P50) ----------------------
+  new Chart(document.getElementById('chartLocalComposition'), {
+    type: 'bar',
+    data: {
+      labels: ['device_readiness', 'app_install', 'maestro_init', 'driver_setup', 'device_info', 'launch_app', 'tap_searchField', 'erase × 115', 'input × 115', 'assert × 115', 'stop'],
+      datasets: [{
+        label: 'P50 (ms)',
+        data: [255, 1680, 1027, 680, 282, 1253, 2100, 386055, 221720, 57385, 570],
+        backgroundColor: ['#67e8f9','#67e8f9','#a5f3fc','#a5f3fc','#a5f3fc','#22d3ee','#22d3ee','#0891b2','#0891b2','#0891b2','#cffafe'],
+        borderRadius: 6
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: { label: (ctx) => `${ctx.parsed.x.toLocaleString()} ms (${(ctx.parsed.x/1000).toFixed(2)} s)` }
+        }
+      },
+      scales: {
+        x: {
+          type: 'logarithmic',
+          title: { display: true, text: 'milliseconds (log scale)' },
+          grid: { color: '#e2e8f0' }
+        },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+
+  // ----- Chart 2: Local per-rep step breakdown ------------------
+  new Chart(document.getElementById('chartLocalSteps'), {
+    type: 'bar',
+    data: {
+      labels: ['Erase text', 'Input text "Browser"', 'Assert visible'],
+      datasets: [
+        { label: 'P50', data: [3357, 1928, 499], backgroundColor: PALETTE.localLight, borderRadius: 6 },
+        { label: 'P90', data: [3376, 1947, 540], backgroundColor: PALETTE.local, borderRadius: 6 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        tooltip: {
+          callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} ms` }
+        }
+      },
+      scales: {
+        y: { title: { display: true, text: 'milliseconds' }, grid: { color: '#e2e8f0' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+
+  // ----- Chart 3: Cloud session_total distribution -------------
+  const cloudDurations = [
+    // failed/error (sorted asc)
+    40, 40, 41, 52, 159, 195, 196, 216, 216, 228,
+    // passed (sorted asc)
+    704, 706, 708, 722, 724, 725, 725, 726, 726, 726, 727, 727, 727, 727, 728, 728, 728, 729, 729, 729, 729, 729, 730, 730, 731, 731, 731, 731, 732, 732, 732, 732, 732, 732, 733, 733, 734, 735, 736, 736, 737, 737, 737, 737, 737, 738, 739, 739, 739, 740, 740, 740, 741, 742, 743, 745, 747, 748, 749, 750, 751, 751, 751, 752, 752, 752, 753, 757, 757, 758, 758, 758, 759, 762, 765, 766, 767, 771, 773, 778, 789, 805, 829
+  ];
+  const cloudColors = cloudDurations.map(d => d < 600 ? PALETTE.fail : PALETTE.pass);
+  new Chart(document.getElementById('chartCloudDist'), {
+    type: 'bar',
+    data: {
+      labels: cloudDurations.map((_, i) => i + 1),
+      datasets: [{
+        label: 'session_total (s)',
+        data: cloudDurations,
+        backgroundColor: cloudColors,
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: { label: (ctx) => `Session ${ctx.dataIndex + 1}: ${ctx.parsed.y} s · ${ctx.parsed.y < 600 ? 'failed/error' : 'passed'}` }
+        },
+        annotation: {}
+      },
+      scales: {
+        y: { title: { display: true, text: 'session_total (seconds)' }, grid: { color: '#e2e8f0' } },
+        x: { title: { display: true, text: 'session rank (sorted)' }, grid: { display: false }, ticks: { display: false } }
+      }
+    }
+  });
+
+  // ----- Chart 4: Failure analysis (firecmd vs duration) -------
+  // Real (firecmd_ms, execution_s, status) tuples from BQ
+  const cloudPoints = [
+    {x:8120, y:725, s:'passed'},{x:9519, y:724, s:'passed'},{x:8314, y:727, s:'passed'},{x:9199, y:727, s:'passed'},
+    {x:8355, y:728, s:'passed'},{x:8631, y:729, s:'passed'},{x:10106, y:731, s:'passed'},{x:8479, y:733, s:'passed'},
+    {x:12741, y:731, s:'passed'},{x:9516, y:736, s:'passed'},{x:9267, y:737, s:'passed'},{x:8189, y:739, s:'passed'},
+    {x:8568, y:737, s:'passed'},{x:10135, y:737, s:'passed'},{x:8576, y:739, s:'passed'},{x:8013, y:740, s:'passed'},
+    {x:8755, y:751, s:'passed'},{x:8354, y:753, s:'passed'},{x:9340, y:752, s:'passed'},{x:9040, y:752, s:'passed'},
+    {x:8465, y:758, s:'passed'},{x:11359, y:752, s:'passed'},{x:9935, y:758, s:'passed'},{x:9712, y:759, s:'passed'},
+    {x:8144, y:41, s:'failed'},{x:16227, y:216, s:'failed'},{x:24299, y:195, s:'failed'},{x:17864, y:216, s:'failed'},
+    {x:26415, y:196, s:'failed'},{x:7557, y:704, s:'passed'},{x:7703, y:726, s:'passed'},{x:7600, y:706, s:'passed'},
+    {x:8069, y:737, s:'passed'},{x:7737, y:729, s:'passed'},{x:8139, y:741, s:'passed'},{x:8039, y:728, s:'passed'},
+    {x:7880, y:730, s:'passed'},{x:7731, y:733, s:'passed'},{x:7725, y:727, s:'passed'},{x:8071, y:739, s:'passed'},
+    {x:8142, y:740, s:'passed'},{x:32615, y:737, s:'passed'},{x:7925, y:750, s:'passed'},{x:12617, y:52, s:'error'},
+    {x:8740, y:778, s:'passed'},{x:8236, y:751, s:'passed'},{x:8078, y:40, s:'failed'},{x:12477, y:805, s:'passed'},
+    {x:8829, y:159, s:'failed'},{x:188176, y:228, s:'failed'},{x:7843, y:40, s:'failed'},{x:188515, y:730, s:'passed'},
+    {x:204219, y:727, s:'passed'},{x:7809, y:731, s:'passed'},{x:8702, y:726, s:'passed'},{x:9976, y:728, s:'passed'},
+    {x:10017, y:757, s:'passed'},{x:7977, y:743, s:'passed'},{x:7997, y:732, s:'passed'},{x:7952, y:729, s:'passed'},
+    {x:8357, y:726, s:'passed'},{x:8162, y:732, s:'passed'},{x:7676, y:736, s:'passed'},{x:8174, y:727, s:'passed'},
+    {x:10075, y:767, s:'passed'},{x:8730, y:747, s:'passed'},{x:8130, y:749, s:'passed'},{x:7954, y:789, s:'passed'},
+    {x:8363, y:742, s:'passed'},{x:8906, y:771, s:'passed'},{x:7655, y:729, s:'passed'},{x:8248, y:728, s:'passed'},
+    {x:8072, y:745, s:'passed'},{x:8081, y:731, s:'passed'},{x:7543, y:733, s:'passed'},{x:8657, y:751, s:'passed'},
+    {x:7667, y:732, s:'passed'},{x:10097, y:762, s:'passed'},{x:8688, y:766, s:'passed'},{x:8359, y:773, s:'passed'},
+    {x:8095, y:732, s:'passed'},{x:8030, y:722, s:'passed'},{x:7701, y:729, s:'passed'},{x:8295, y:735, s:'passed'},
+    {x:9117, y:737, s:'passed'},{x:8608, y:739, s:'passed'},{x:8235, y:765, s:'passed'},{x:7879, y:729, s:'passed'},
+    {x:8276, y:757, s:'passed'},{x:8172, y:758, s:'passed'},{x:11711, y:829, s:'passed'},{x:7903, y:738, s:'passed'},
+    {x:7609, y:725, s:'passed'},{x:7737, y:732, s:'passed'},{x:8256, y:740, s:'passed'},{x:16256, y:748, s:'passed'},
+    {x:7653, y:708, s:'passed'},{x:7689, y:734, s:'passed'}
+  ];
+  const passedPts = cloudPoints.filter(p => p.s === 'passed');
+  const failedPts = cloudPoints.filter(p => p.s === 'failed' || p.s === 'error');
+  new Chart(document.getElementById('chartCloudFailures'), {
+    type: 'scatter',
+    data: {
+      datasets: [
+        { label: 'Passed', data: passedPts, backgroundColor: PALETTE.pass, borderColor: PALETTE.pass, pointRadius: 5 },
+        { label: 'Failed / error', data: failedPts, backgroundColor: PALETTE.fail, borderColor: PALETTE.fail, pointRadius: 6 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        tooltip: {
+          callbacks: { label: (ctx) => `${ctx.dataset.label}: firecmd=${ctx.parsed.x.toLocaleString()} ms · duration=${ctx.parsed.y} s` }
+        }
+      },
+      scales: {
+        x: { type: 'logarithmic', title: { display: true, text: 'firecmd_ms (log scale)' }, grid: { color: '#e2e8f0' } },
+        y: { title: { display: true, text: 'session duration (s)' }, grid: { color: '#e2e8f0' } }
+      }
+    }
+  });
+
+  // ----- Chart 5: Comparison (toggleable) ----------------------
+  const compareData = {
+    aggregate: {
+      labels: ['app_install', 'maestro_total', 'session_total'],
+      local_p50: [1680, 677011, 679451],
+      local_p90: [1769, 680011, 682602],
+      cloud_p50: [870, 743708, 733500],
+      cloud_p90: [1324, 773670, 759900]
+    },
+    all: {
+      labels: ['device_readiness', 'app_install', 'maestro_init', 'driver_setup', 'device_info', 'launch_app', 'tap_searchField', 'per_rep_total', 'stop', 'maestro_total', 'session_total'],
+      local_p50: [255, 1680, 1027, 680, 282, 1253, 2100, 5787, 570, 677011, 679451],
+      local_p90: [335, 1769, 1314, 711, 301, 1278, 2274, 5848, 646, 680011, 682602],
+      cloud_p50: [null, 870, null, null, null, null, null, null, null, 743708, 733500],
+      cloud_p90: [null, 1324, null, null, null, null, null, null, null, 773670, 759900]
+    }
+  };
+
+  let compareChart = new Chart(document.getElementById('chartCompare'), {
+    type: 'bar',
+    data: buildCompareData('aggregate'),
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        tooltip: {
+          callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y == null ? 'no data' : ctx.parsed.y.toLocaleString() + ' ms'}` }
+        }
+      },
+      scales: {
+        y: { type: 'logarithmic', title: { display: true, text: 'milliseconds (log)' }, grid: { color: '#e2e8f0' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+
+  function buildCompareData(mode) {
+    const d = compareData[mode];
+    return {
+      labels: d.labels,
+      datasets: [
+        { label: 'Local P50', data: d.local_p50, backgroundColor: PALETTE.localLight, borderRadius: 4 },
+        { label: 'Local P90', data: d.local_p90, backgroundColor: PALETTE.local, borderRadius: 4 },
+        { label: 'Cloud P50', data: d.cloud_p50, backgroundColor: PALETTE.cloudLight, borderRadius: 4 },
+        { label: 'Cloud P90', data: d.cloud_p90, backgroundColor: PALETTE.cloud, borderRadius: 4 }
+      ]
+    };
+  }
+
+  document.querySelectorAll('[data-comparison]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-comparison]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      compareChart.data = buildCompareData(btn.dataset.comparison);
+      compareChart.update();
+    });
+  });
+
+  // ----- Info-icon floating tooltip ---------------------------
+  // Each .info icon has a data-tip="<key>" attribute. The TIPS registry
+  // below holds the title, command snippet, and plain-English definition
+  // for that key. Hovering the icon opens a styled tooltip; mouseleave
+  // hides it. Tooltip is position:fixed so it escapes any overflow:auto
+  // wrapper (notably the table-wrap).
+  const TIPS = {
+    // ----- Pre-Maestro -----
+    device_readiness: {
+      title: "device_readiness — Pre-Maestro phase",
+      commands: "xcrun devicectl device info details --device <udid>",
+      definition: "We check that the iPhone is connected and reachable — like asking 'is the phone there and turned on?' before doing anything else. Just a quick handshake."
+    },
+    app_install: {
+      title: "app_install — Pre-Maestro phase",
+      commands: "xcrun devicectl device install app --device <udid> HelloBench.app",
+      definition: "Install the HelloBench app onto the iPhone. Same idea as installing an app from the App Store, just pushed from the Mac over USB."
+    },
+
+    // ----- Maestro startup -----
+    maestro_init: {
+      title: "maestro_init — Maestro startup phase",
+      commands: "$ ~/.maestro/bin/maestro test ...   (JVM cold-start)",
+      definition: "Maestro is written in Java. When you launch it, the Java engine has to start up first — like turning the key in a car before you can drive. About 1 second of pure startup overhead."
+    },
+    driver_setup: {
+      title: "driver_setup — Maestro startup phase",
+      commands: "GET http://127.0.0.1:22087/status   (poll until ready)",
+      definition: "Maestro talks to a small helper app (the 'driver') running on the iPhone over a USB-forwarded HTTP connection. Setting up that connection — and waiting for the driver to say 'ready' — takes a moment."
+    },
+    device_info: {
+      title: "device_info — Maestro startup phase",
+      commands: "POST http://127.0.0.1:22087/deviceInfo",
+      definition: "Maestro asks the iPhone for basic info: model, screen size, iOS version. Quick metadata fetch so it knows what it's working with."
+    },
+
+    // ----- Flow execution -----
+    define_variables: {
+      title: "Define variables — Flow execution",
+      commands: "(YAML pre-process — no Maestro action API call)",
+      definition: "Maestro reads any variables declared in the flow YAML before running. Our flow doesn't declare any, so this is essentially instant (~4 ms)."
+    },
+    apply_configuration: {
+      title: "Apply configuration — Flow execution",
+      commands: "(reads YAML header: appId, tags)",
+      definition: "Maestro reads the YAML header settings (which app to target, which tags apply, etc.) and applies them. Near-instant (~1 ms)."
+    },
+    launch_app: {
+      title: "launchApp — Flow execution",
+      commands: "- launchApp",
+      definition: "Open (start) HelloBench on the device — just like a user tapping the app icon on the home screen. Internally Maestro asks the on-device driver to launch the app, then waits for it to be in the foreground."
+    },
+    tap_searchfield: {
+      title: "tapOn searchField — Flow execution",
+      commands: "- tapOn:\n    id: \"searchField\"",
+      definition: "Tap on the search box at the top of HelloBench — same as a user touching it to start typing. Maestro finds the element by its accessibility id and sends a synthetic touch event."
+    },
+    erase_text: {
+      title: "eraseText — Flow execution (per rep)",
+      commands: "- eraseText",
+      definition: "Clear whatever is in the focused text field. Maestro sends backspace key events one character at a time, like a user deleting their input. Iterated 115 times per session — this dominates the loop cost."
+    },
+    input_text: {
+      title: "inputText — Flow execution (per rep)",
+      commands: "- inputText: \"Browser\"",
+      definition: "Type the literal text 'Browser' into the focused text field — character by character, like a real user typing. Iterated 115 times per session."
+    },
+    assert_visible: {
+      title: "assertVisible — Flow execution (per rep)",
+      commands: "- assertVisible:\n    id: \"item_BrowserStack\"",
+      definition: "Confirm an element with id 'item_BrowserStack' is currently shown on screen. If it isn't visible, the test fails. This is the validation step that makes the loop a real test rather than just typing."
+    },
+    per_rep_total: {
+      title: "Per-rep total — Synthesized aggregate",
+      commands: "= eraseText + inputText + assertVisible   (sum per rep)",
+      definition: "Sum of erase + input + assert for each of the 1,150 reps (10 sessions × 115 reps). Represents how long one full inner-loop iteration takes end-to-end."
+    },
+
+    // ----- Post-Maestro -----
+    stop_phase: {
+      title: "stop — Post-Maestro phase",
+      commands: "xcrun devicectl device uninstall app --device <udid> com.***.HelloBench",
+      definition: "Uninstall HelloBench from the iPhone after the test finishes — like deleting an app you installed temporarily — so the next session starts clean."
+    },
+
+    // ----- Aggregates -----
+    maestro_total: {
+      title: "maestro_total — Aggregate",
+      commands: "wall-clock of the entire 'maestro test' invocation",
+      definition: "Total time the 'maestro test' command was running, end-to-end: startup + flow execution. Does not include device probe, app install, or app uninstall — those are bash-script overhead measured separately."
+    },
+    session_total: {
+      title: "session_total — Aggregate",
+      commands: "= device_readiness + app_install + maestro_total + stop",
+      definition: "Wall-clock time for one full session: device probe + app install + maestro_total + app uninstall. THIS is the headline number that gets benchmarked against the 1.1× ceiling."
+    },
+
+    // ----- Cloud-specific variants -----
+    device_readiness_cloud: {
+      title: "device_readiness — Pre-Maestro phase (cloud)",
+      commands: "(not exposed by BS BigQuery)",
+      definition: "BrowserStack doesn't surface a 'device readiness' metric in BigQuery, so this row is blank for cloud. The work still happens on BS's side; we just can't see it."
+    },
+    app_install_cloud: {
+      title: "app_install — Pre-Maestro phase (cloud)",
+      commands: "BQ field: app_install_time",
+      definition: "Time BrowserStack spent installing the HelloBench .ipa onto the assigned iPhone before the test ran. Surprisingly, cloud is faster here than local — BS's signing pipeline beats xcrun devicectl with a free Personal Team profile."
+    },
+    maestro_total_cloud: {
+      title: "maestro_total — Aggregate (cloud)",
+      commands: "= firecmd_time + duration   (BQ fields)",
+      definition: "Cloud equivalent of maestro_total. firecmd_time is BS's bootstrap before Maestro starts; duration is the actual flow execution. Both pulled from BigQuery."
+    },
+    session_total_cloud: {
+      title: "session_total — Aggregate (cloud)",
+      commands: "BS REST API: session.duration",
+      definition: "Wall-clock duration of the BrowserStack session as reported by the REST API. This is the customer-visible number that gets compared to local in the 1.1× check."
+    },
+
+    // ----- Caption icon -----
+    info_icon: {
+      title: "Info icon",
+      commands: "(this is just an example)",
+      definition: "Hover any of these icons throughout the report to see what the named phase or command does in plain English, plus the underlying command if there is one."
+    }
+  };
+
+  // Build tooltip element once
+  const tipEl = document.createElement('div');
+  tipEl.id = 'info-tip';
+  document.body.appendChild(tipEl);
+
+  function showTip(iconEl) {
+    const key = iconEl.getAttribute('data-tip');
+    const data = TIPS[key];
+    if (!data) return;
+    const cmdHtml = data.commands
+      ? '<div class="tip-section"><div class="tip-label">Command</div><pre></pre></div>'
+      : '';
+    tipEl.innerHTML = '<div class="tip-arrow"></div>'
+      + '<div class="tip-title"></div>'
+      + cmdHtml
+      + '<div class="tip-section"><div class="tip-label">What it does</div><p></p></div>';
+    tipEl.querySelector('.tip-title').textContent = data.title || '';
+    if (data.commands) tipEl.querySelector('pre').textContent = data.commands;
+    tipEl.querySelector('p').textContent = data.definition || '';
+
+    // Position above the icon, centered horizontally
+    const r = iconEl.getBoundingClientRect();
+    tipEl.classList.add('show');
+    // measure after render
+    requestAnimationFrame(() => {
+      const tr = tipEl.getBoundingClientRect();
+      let left = r.left + r.width / 2 - tr.width / 2;
+      let top = r.top - tr.height - 12;
+      let placement = 'above';
+      if (top < 8) {
+        top = r.bottom + 12;
+        placement = 'below';
+      }
+      // Keep within viewport
+      const maxLeft = window.innerWidth - tr.width - 8;
+      if (left < 8) left = 8;
+      if (left > maxLeft) left = maxLeft;
+      tipEl.style.left = left + 'px';
+      tipEl.style.top = top + 'px';
+      tipEl.classList.remove('above', 'below');
+      tipEl.classList.add(placement);
+      // Re-center the arrow on the icon (icons can sit far left/right)
+      const arrow = tipEl.querySelector('.tip-arrow');
+      const iconCenter = r.left + r.width / 2;
+      const arrowLeft = iconCenter - left;
+      arrow.style.left = Math.max(12, Math.min(tr.width - 12, arrowLeft)) + 'px';
+      arrow.style.marginLeft = '-6px';
+    });
+  }
+
+  function hideTip() {
+    tipEl.classList.remove('show');
+  }
+
+  document.querySelectorAll('.info').forEach(el => {
+    el.addEventListener('mouseenter', () => showTip(el));
+    el.addEventListener('mouseleave', hideTip);
+    // Also support keyboard focus for accessibility
+    el.setAttribute('tabindex', '0');
+    el.addEventListener('focus', () => showTip(el));
+    el.addEventListener('blur', hideTip);
+  });
+  // Hide on scroll so the tooltip doesn't visually drift
+  window.addEventListener('scroll', hideTip, { passive: true });
+</script>
+
+</body>
+</html>

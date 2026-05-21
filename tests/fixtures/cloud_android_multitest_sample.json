@@ -1,0 +1,26 @@
+{
+  "_comment": "Synthetic BQ MCP response for cloud_android dual-yaml workload. Three sessions matching the smoke build's row shape; durations chosen to make percentile assertions stable.",
+  "schema": {
+    "fields": [
+      {"name": "hashed_id", "type": "STRING"},
+      {"name": "build_id", "type": "STRING"},
+      {"name": "device_region", "type": "STRING"},
+      {"name": "execution_s", "type": "FLOAT"},
+      {"name": "firecmd_ms", "type": "INT64"},
+      {"name": "app_dl_ms", "type": "INT64"},
+      {"name": "app_install_ms", "type": "INT64"},
+      {"name": "test_dl_ms", "type": "INT64"},
+      {"name": "test_install_ms", "type": "INT64"},
+      {"name": "stop_ms", "type": "INT64"},
+      {"name": "waiting_no_parallel_ms", "type": "INT64"},
+      {"name": "waiting_device_tier_ms", "type": "INT64"},
+      {"name": "waiting_async_signing_ms", "type": "INT64"},
+      {"name": "waiting_region_pool_ms", "type": "INT64"}
+    ]
+  },
+  "rows": [
+    {"f": [{"v": "sa01"}, {"v": "bid01"}, {"v": "ap-south-1"}, {"v": "1100.0"}, {"v": "13000"}, {"v": "200"}, {"v": "4800"}, {"v": "75"}, {"v": "0"}, {"v": null}, {"v": "0"}, {"v": "0"}, {"v": "0"}, {"v": "0"}]},
+    {"f": [{"v": "sa02"}, {"v": "bid01"}, {"v": "ap-south-1"}, {"v": "1150.0"}, {"v": "13500"}, {"v": "220"}, {"v": "4900"}, {"v": "80"}, {"v": "0"}, {"v": null}, {"v": "0"}, {"v": "0"}, {"v": "0"}, {"v": "0"}]},
+    {"f": [{"v": "sa03"}, {"v": "bid01"}, {"v": "ap-south-1"}, {"v": "1200.0"}, {"v": "14000"}, {"v": "240"}, {"v": "5000"}, {"v": "85"}, {"v": "0"}, {"v": null}, {"v": "0"}, {"v": "0"}, {"v": "0"}, {"v": "0"}]}
+  ]
+}

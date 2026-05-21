@@ -1,0 +1,21 @@
+phase_group,phase_step,local_N,local_min_ms,local_p50_ms,local_p75_ms,local_p90_ms,local_p95_ms,local_p100_ms,cloud_N,cloud_min_ms,cloud_p50_ms,cloud_p75_ms,cloud_p90_ms,cloud_p95_ms,cloud_p100_ms,delta_p50_ms,delta_p90_ms
+Pre-Maestro,device_readiness,9,109,141,143,150,153,157,0,,,,,,,,
+Pre-Maestro,app_install,9,1472,1672,1842,1995,2037,2079,97,3285,4898,5623,6564,6957,10356,3226,4569
+Maestro startup,maestro_init,9,1184,1462,1531,1588,1596,1604,0,,,,,,,,
+Maestro startup,driver_setup,9,3344,3850,4465,5501,7063,8626,0,,,,,,,,
+Maestro startup,device_info,9,194,209,223,224,224,225,0,,,,,,,,
+Flow execution,Define variables,9,3,3,4,4,5,7,0,,,,,,,,
+Flow execution,Apply configuration,9,0,1,1,1,1,1,0,,,,,,,,
+Flow execution,Launch app,9,1228,1462,1480,1556,1591,1626,0,,,,,,,,
+Flow execution,Tap on OK dialog,9,3645,3975,4168,4802,5339,5877,0,,,,,,,,
+Flow execution,Tap on search container,9,3784,4046,4086,4152,4189,4227,0,,,,,,,,
+Flow execution,Erase text,900,2350,4101,4523,6819,12808,52335,0,,,,,,,,
+Flow execution,Input text BrowserStack,900,2797,3454,5648,11870,15665,36868,0,,,,,,,,
+Flow execution,Assert Software company text visible,900,202,459,570,1091,4553,40088,0,,,,,,,,
+Flow execution,Per-rep total,900,5633,8579,13064,20144,27595,56300,0,,,,,,,,
+Post-Maestro,stop,9,532,669,722,735,745,756,0,,,,,,,,
+Aggregates,maestro_total,9,1136448,1205416,1246404,1253391,1257891,1262392,97,1016649,1122238,1130283,1135752,1140967,2036587,-83178,-117639
+Aggregates,session_total,9,1138943,1207861,1248838,1255756,1260274,1264792,97,1036000,1139000,1149000,1155800,1161600,2054000,-68861,-99956
+Aggregates,tc_a_duration,0,,,,,,,97,481000,528000,531000,532000,533200,563000,,
+Aggregates,tc_b_duration,0,,,,,,,97,481000,527000,530000,531000,533000,562000,,
+Aggregates,tc_combined_duration,0,,,,,,,97,964000,1055000,1060000,1063000,1065200,1125000,,

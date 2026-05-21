@@ -1,0 +1,26 @@
+appId: com.vinitg.HelloBench
+tags:
+  - benchmark
+  - real-user-sim
+---
+# iOS local Maestro benchmark — search-and-assert loop on HelloBench.
+# Sized so session_total P90 ≈ 733 s (PDF spec target for Maestro iOS).
+#
+# Calibration source: smoke run 20260507_190530 on iPhone 17 / iOS 26.3.1.
+#   per-rep P50 (erase+input+assert) ≈ 5.82 s, P90 ≈ 5.86 s
+#   per-session overhead ≈ 12.8 s (device probe + install + driver setup
+#                                 + pre-loop steps + post-shutdown + uninstall)
+#
+# Solve for N: N = (733 - 12.8) / 5.86 ≈ 122.9 → 123 reps (calibrated).
+# User chose 115 reps for the first real run; accept whatever P90 lands
+# without recalibrating.
+- launchApp
+- tapOn:
+    id: "searchField"
+- repeat:
+    times: 115
+    commands:
+      - eraseText
+      - inputText: "Browser"
+      - assertVisible:
+          id: "item_BrowserStack"
