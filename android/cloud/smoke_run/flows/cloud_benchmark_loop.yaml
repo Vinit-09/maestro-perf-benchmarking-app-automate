@@ -1,0 +1,30 @@
+appId: org.wikipedia.alpha
+tags:
+  - benchmark
+  - smoke
+---
+# Cloud Maestro Android SMOKE flow.
+# Same shape as android/local/flows/benchmark_loop.yaml — selector-based
+# search loop on WikipediaSample.apk — so cloud per-step timings line up
+# with local reports step-for-step.
+#
+# 100 reps for smoke (validates upload, trigger, poll, and end-to-end
+# timing collection on OnePlus 12R-14.0). 1 device entry (-n 1).
+#
+# Note: the existing cloud_benchmark_loop.yaml in the parent folder is
+# selector-FREE (swipe-only) because the search_container ID failed on
+# the previously-used cloud device. OnePlus 12R-14.0 is untested; selector
+# likely works (local OnePlus 9R-14 with the same APK passes). If it fails
+# on this device, fall back to the swipe-only shape.
+- launchApp
+- tapOn:
+    text: "OK"
+    optional: true
+- tapOn:
+    id: "org.wikipedia.alpha:id/search_container"
+- repeat:
+    times: 100
+    commands:
+      - eraseText
+      - inputText: "BrowserStack"
+      - assertVisible: "Software company based in India"
