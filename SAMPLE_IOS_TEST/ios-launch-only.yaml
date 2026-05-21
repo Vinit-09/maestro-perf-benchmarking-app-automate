@@ -1,7 +1,0 @@
-appId: com.browserstack.Sample-iOS
-tags:
-  - smoke
-  - launch-only
----
-- launchApp
-- takeScreenshot: launched

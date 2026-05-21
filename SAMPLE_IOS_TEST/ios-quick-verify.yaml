@@ -1,9 +1,0 @@
-appId: com.browserstack.Sample-iOS
-tags:
-  - verify
----
-# Minimal flow for plumbing/parallelism verification builds.
-# ~5-10 s on cloud — use this when validating API behavior, not the
-# 600-700 s benchmark loop.
-- launchApp
-- takeScreenshot: ok
