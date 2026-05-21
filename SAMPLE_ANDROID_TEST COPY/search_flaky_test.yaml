@@ -1,9 +1,0 @@
-appId: org.wikipedia.alpha
-tags:
-  - regression
-  - flaky
----
-- launchApp
-- tapOn: "Search Wikipedia"
-- inputText: "Quantum computing"
-- assertVisible: "study of quantum-mechanical computation"

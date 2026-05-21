@@ -1,9 +1,0 @@
-appId: org.wikipedia.alpha
-tags:
-  - regression
-  - cloud_provider
----
-- launchApp
-- tapOn: "Search Wikipedia"
-- inputText: "Amazon Web Services"
-- assertVisible: "Cloud computing platform"
