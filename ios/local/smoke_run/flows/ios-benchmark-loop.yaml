@@ -1,0 +1,18 @@
+appId: com.vinitg.HelloBench
+tags:
+  - benchmark
+  - smoke
+---
+# Smoke variant of ios/local/flows/ios-benchmark-loop.yaml — 2 reps instead
+# of 60 so a single session finishes in seconds, not minutes. Used to verify
+# device wiring, signing trust, and selector validity before a long run.
+- launchApp
+- tapOn:
+    id: "searchField"
+- repeat:
+    times: 2
+    commands:
+      - eraseText
+      - inputText: "Browser"
+      - assertVisible:
+          id: "item_BrowserStack"

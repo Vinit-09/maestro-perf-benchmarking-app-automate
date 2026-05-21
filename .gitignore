@@ -36,6 +36,10 @@ ios/**/*.xcresult/
 *.pcm
 *.sdkstatcache
 
+# Xcode user-specific IDE state
+ios/**/xcuserdata/
+ios/**/*.xcuserstate
+
 # Python
 __pycache__/
 *.pyc
