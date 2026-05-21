@@ -26,7 +26,7 @@ from pipeline.rollup import RollupRow
 STOP_FOOTNOTE_MARKER = "*"
 STOP_FOOTNOTE_TEXT = (
     "Stop time is NULL for Maestro sessions in BigQuery as of 2026-05-04 — "
-    "see BENCHMARK_REPORT_IOS_CLOUD recommendation A4."
+    "see docs/reference/benchmark-report-ios-cloud.md recommendation A4."
 )
 
 

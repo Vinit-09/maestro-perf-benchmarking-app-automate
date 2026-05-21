@@ -1,6 +1,6 @@
 # Maestro Android — Local Benchmark Smoke Run
 
-> **Note:** for the formal benchmark setup (looped flow, device prep, aggregation), see **`FORMAL_BENCHMARK.md`**. This document is the as-built smoke validation that preceded it.
+> **Note:** for the formal benchmark setup (looped flow, device prep, aggregation), see **`formal-benchmark-android.md`**. This document is the as-built smoke validation that preceded it.
 
 **Status:** Plumbing validated. Metrics captured end-to-end.
 **Date:** 2026-04-30

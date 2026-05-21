@@ -18,7 +18,7 @@ The per-step ms inside `execution_ms` (e.g., `tapOn = 7,244 ms`) come from Maest
 
 ## Cloud-only metrics, intentionally not captured locally
 
-`waiting_time` (queue), `app_upload_time`, `app_download_time`, `test_suite_upload_time`, `test_suite_download_time` — all require BrowserStack infrastructure (queues, blob storage, host VM). They're correctly N/A in the local context and recorded as `—` in `SMOKE_RESULTS.md`.
+`waiting_time` (queue), `app_upload_time`, `app_download_time`, `test_suite_upload_time`, `test_suite_download_time` — all require BrowserStack infrastructure (queues, blob storage, host VM). They're correctly N/A in the local context and recorded as `—` in `smoke-results-android.md`.
 
 ---
 

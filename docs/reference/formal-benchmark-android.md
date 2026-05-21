@@ -2,7 +2,7 @@
 
 This is the per-spec setup for **PROD-Framework Performance Benchmarking** §"How to Run Benchmarks" → Maestro / Android.
 
-For phase definitions and human-intervention semantics see `PHASE_DEFINITIONS.md`.
+For phase definitions and human-intervention semantics see `phase-definitions.md`.
 
 ---
 
@@ -46,18 +46,22 @@ CSV at `results/sessions.csv` is the source of truth. Each row = one session. Sc
 
 ## Files added / changed for the formal benchmark
 
+> Tree below is the original 2026-04-30 layout. After the 2026-05-21 reorg
+> the local-Android pieces live under `android/local/`; shared utilities
+> remain at repo root; reference docs moved to `docs/reference/`.
+
 ```
-/Users/vinits/local_run_android/
-├── prepare_device.sh                                    # NEW — one-time device prep
-├── run_benchmark.sh                                     # UPDATED — defaults to formal mode
-├── parse_maestro_log.py                                 # (unchanged)
-├── aggregate_results.py                                 # NEW — P50/P90 stats from CSV
-├── SAMPLE_ANDROID_TEST COPY/
-│   ├── benchmark_loop.yaml                              # NEW — 125× loop, ~1198 s exec
-│   ├── benchmark_calibration.yaml                       # NEW — 5× loop, used for sizing
-│   └── search_browserstack.yaml … (smoke flows)         # (unchanged)
-├── results/sessions.csv                                 # appended per run
-└── PHASE_DEFINITIONS.md, SMOKE_RESULTS.md, FORMAL_BENCHMARK.md
+perf_bench_maestro/
+├── android/local/prepare_device.sh                      # one-time device prep
+├── android/local/run_benchmark.sh                       # defaults to formal mode
+├── parse_maestro_log.py                                 # shared, repo root
+├── aggregate_results.py                                 # P50/P90 stats from CSV
+├── android/local/flows/
+│   ├── benchmark_loop.yaml                              # 125× loop, ~1198 s exec
+│   ├── benchmark_calibration.yaml                       # 5× loop, used for sizing
+│   └── search_browserstack.yaml … (smoke flows)
+├── android/local/results/sessions.csv                   # appended per run
+└── docs/reference/{phase-definitions,smoke-results-android,formal-benchmark-android}.md
 ```
 
 ---

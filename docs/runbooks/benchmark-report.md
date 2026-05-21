@@ -160,7 +160,7 @@ Coordinate with the BS data team on the final table name and dataset before exec
 | Exit 2, "no successful 'ios' sessions" | All sessions in the dir failed (exit_code != 0) | Investigate the local-iOS runner; the rollup needs at least one passing session |
 | `action.json` has `partial_cells: ["..."]` but still complete | A cell has data but n < 30 | Acceptable — email annotates the cell. Or re-run that cell to grow N |
 | BQ INSERT in Claude returns "table not found" | Step 5 hasn't run | Run step 5 first |
-| Stop columns in email all show `—*` | Expected — `total_stop_time` is NULL in BQ for every Maestro session as of 2026-05-04 | Out of pipeline scope; tracked as recommendation A4 in `BENCHMARK_REPORT_IOS_CLOUD.md` |
+| Stop columns in email all show `—*` | Expected — `total_stop_time` is NULL in BQ for every Maestro session as of 2026-05-04 | Out of pipeline scope; tracked as recommendation A4 in `docs/reference/benchmark-report-ios-cloud.md` |
 | BQ ingestion lag — cloud BQ response has fewer rows than the build had sessions | Some sessions haven't been written yet | Wait 60+ minutes after last session ended, then re-run step 1 |
 
 ---
@@ -172,4 +172,4 @@ Coordinate with the BS data team on the final table name and dataset before exec
 - `pipeline/email_renderer.py` — the subject + body
 - `pipeline/cells.py` + `pipeline/rollup.py` + `pipeline/gate.py` — the aggregation core
 - `docs/plans/2026-05-04-001-feat-maestro-benchmark-pipeline-plan.md` — the plan that produced this pipeline
-- `generated_docs/BENCHMARK_REPORT_IOS_CLOUD.md` — recommendation A4 (NULL stop_time gap)
+- `docs/reference/benchmark-report-ios-cloud.md` — recommendation A4 (NULL stop_time gap)
