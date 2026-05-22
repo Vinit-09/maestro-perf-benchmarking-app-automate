@@ -35,6 +35,19 @@ run-set (see `docs/runbooks/benchmark-report.md`).
 `MAESTRO` env var overrides the Maestro binary path (default
 `~/.maestro/bin/maestro`).
 
+### iOS bundle ID
+
+The default is `com.vinitg.HelloBench` (the team-prefix the original
+HelloBench.ipa was signed with). If you re-sign the app:
+
+1. In Xcode, change `PRODUCT_BUNDLE_IDENTIFIER` + `DEVELOPMENT_TEAM` on the
+   HelloBench target and rebuild the `.ipa`.
+2. Export `IOS_BUNDLE_ID=<your-bundle-id>` before invoking any iOS runner.
+
+The local runners pass it to Maestro via `--env`; the cloud runner
+substitutes it into the flow yaml at zip time (independent of any
+BS-side env interpolation).
+
 ## Apps
 
 `apps/` is gitignored (binaries). The next person needs to populate it:
@@ -42,7 +55,7 @@ run-set (see `docs/runbooks/benchmark-report.md`).
 | File | What | How to obtain |
 |---|---|---|
 | `apps/WikipediaSample.apk` | Wikipedia alpha — used by every Android cell | Maestro samples repo or BS sample-apps page |
-| `apps/HelloBench.ipa` | Bare SwiftUI search app — used by every current iOS cell | Build from `ios/local/HelloBench/HelloBench.xcodeproj` (Release, generic iOS device archive → export as ad-hoc .ipa) |
+| `apps/HelloBench.ipa` | Bare SwiftUI search app — used by every current iOS cell | Build from `ios/local/HelloBench/HelloBench.xcodeproj` (Release, generic iOS device archive → export as ad-hoc .ipa). If you re-sign with your own Apple Developer team, set `IOS_BUNDLE_ID` (see below) |
 | `apps/BrowserStack-SampleApp.ipa` | Legacy iOS app — no longer used by the canonical benchmark | Keep for reference or delete |
 
 ## How to run a cell

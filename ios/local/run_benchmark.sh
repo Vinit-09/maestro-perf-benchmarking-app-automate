@@ -26,7 +26,7 @@ MAESTRO="${MAESTRO:-/Users/vinits/.maestro/bin/maestro}"
 ITERATIONS=1
 FLOW="$ROOT_DIR/flows/ios-benchmark-loop.yaml"
 APP="$ROOT_DIR/HelloBench/build/dd/Build/Products/Debug-iphoneos/HelloBench.app"
-BUNDLE_ID="com.vinitg.HelloBench"
+BUNDLE_ID="${IOS_BUNDLE_ID:-com.vinitg.HelloBench}"
 TAG="smoke"
 KEEP_INSTALLED=0
 APPLE_TEAM_ID="${APPLE_TEAM_ID:-33MLQVU859}"
@@ -187,7 +187,7 @@ run_once() {
   # Phase 3: maestro test
   t0=$(now_ms)
   set +e
-  $MAESTRO --port "$RUNNER_PORT" --device "$DEVICE_UDID" test "$FLOW" --debug-output "$iter_dir/maestro_debug" > "$maestro_log" 2>&1
+  $MAESTRO --port "$RUNNER_PORT" --device "$DEVICE_UDID" test -e IOS_BUNDLE_ID="$BUNDLE_ID" "$FLOW" --debug-output "$iter_dir/maestro_debug" > "$maestro_log" 2>&1
   local exit_code=$?
   set -e
   t1=$(now_ms)

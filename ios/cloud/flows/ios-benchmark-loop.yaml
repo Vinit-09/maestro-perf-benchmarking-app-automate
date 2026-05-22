@@ -1,4 +1,4 @@
-appId: com.vinitg.HelloBench
+appId: ${IOS_BUNDLE_ID}
 tags:
   - benchmark
   - real-user-sim

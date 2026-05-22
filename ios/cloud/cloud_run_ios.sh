@@ -27,6 +27,7 @@ mkdir -p "$RESULTS_DIR"
 N=1
 TAG="baseline"
 DEVICE="iPhone 17-26"
+BUNDLE_ID="${IOS_BUNDLE_ID:-com.vinitg.HelloBench}"
 FLOW="$ROOT_DIR/flows/ios-benchmark-loop.yaml"
 IPA="$ROOT_DIR/../../apps/HelloBench.ipa"
 SKIP_UPLOAD=0
@@ -75,9 +76,15 @@ echo
 
 # Upload (or reuse cached urls).
 if [[ "$SKIP_UPLOAD" == "0" ]]; then
-  echo "[upload] zipping flow file..."
+  # Substitute IOS_BUNDLE_ID into the flow at zip time so BS receives a yaml
+  # with the literal bundle id (avoids depending on BS-side env interpolation,
+  # which is not documented for Maestro v2).
+  echo "[upload] zipping flow file (substituting IOS_BUNDLE_ID=$BUNDLE_ID)..."
   ZIP="$RUN_DIR/test_suite.zip"
-  ( cd "$(dirname "$FLOW")" && zip -j "$ZIP" "$(basename "$FLOW")" >/dev/null )
+  STAGE="$RUN_DIR/_zip_stage"
+  mkdir -p "$STAGE"
+  sed "s|\${IOS_BUNDLE_ID}|$BUNDLE_ID|g" "$FLOW" > "$STAGE/$(basename "$FLOW")"
+  ( cd "$STAGE" && zip -j "$ZIP" "$(basename "$FLOW")" >/dev/null )
 
   echo "[upload] iOS app (.ipa)..."
   APP_RESP=$(curl -sS "${API_AUTH[@]}" -X POST \
