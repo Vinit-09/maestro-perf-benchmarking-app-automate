@@ -89,20 +89,17 @@ sizing math, aggregation), see `docs/reference/formal-benchmark-android.md`.
 - Cross-cell comparison CSV: `analysis/local_vs_cloud_*_comparison_*.csv`
 - BQ rollup + email: produced by `pipeline/cli.py` (see runbook)
 
-## Current state (as of 2026-05-21)
+## Current state (as of 2026-05-22)
 
 | Cell | Status |
 |---|---|
 | local-Android | 100-rep baseline complete (2026-05-10 run, see `android/local/results/local_android_*_20260510_231553.csv`) |
 | cloud-Android | 100-session multitest baseline complete (build_id `8ed0b0edc7e137a39670472e4855b521e04a6889`, 2026-05-18). Cloud beats local by ~8% at session-total P90 |
-| local-iOS | 1-rep smoke validated (2026-05-08); full 100-rep baseline pending |
+| local-iOS | Baseline complete (2026-05-08 run `20260508_181354`, 10 sessions × 115-rep search loop, see `ios/local/results/local_ios_*_20260508_200720.csv`) |
 | cloud-iOS | 100-session baseline complete (build `82920fe…`, 2026-05-04, see `docs/reference/benchmark-report-ios-cloud.md`) |
 
-Outstanding before "all four cells done":
-1. local-iOS 100-rep baseline run.
-2. Final unified four-cell BQ rollup + email via `pipeline/cli.py` once
-   local-iOS lands (the pipeline already refuses to send when any cell
-   is missing — exits 2).
+Outstanding: final unified four-cell BQ rollup + email via `pipeline/cli.py`
+(the pipeline refuses to send when any cell is missing — exits 2).
 
 ## docs/ map
 
